@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build output
+.next/
+out/
+dist/
+build/
+
+# Caches
+.turbo/
+.cache/
+.eslintcache
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files (keep .env.example committed)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Hosting/platform
+.vercel/
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+cypress/videos/
+cypress/screenshots/
+
+# Binary/artifact media (project-specific)
+public/output.*
+
+# Optional package manager files not used here
+.pnp.*
+.pnpm-store/
+
