@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import DataBrowser from "@/components/visualization/data-browser"
 import LayersTable from "@/components/visualization/layers-table"
+import ViewerOptions from "@/components/visualization/viewer-options"
 
 type LoadedVolume = {
   url: string
@@ -265,6 +266,21 @@ export default function NiftiViewer() {
         <div className="rounded-lg border border-border/60 bg-background/60 p-2">
           <canvas ref={canvasRef} className="w-full aspect-[4/3]" />
         </div>
+        {/* Options toolbar below canvas */}
+        <ViewerOptions
+          sliceType={sliceType}
+          onChangeSliceType={setSliceType}
+          overlayOpacity={overlayOpacity}
+          onChangeOverlayOpacity={(v) => {
+            setOverlayOpacity(v)
+            const nv: any = nvRef.current
+            const segVol = nv?.volumes?.find((vol: any) => vol?.name?.toLowerCase().includes("_seg"))
+            if (segVol) {
+              segVol.opacity = v
+              nv.updateGLVolume()
+            }
+          }}
+        />
         {/* Dataset layers table (always visible) */}
         <LayersTable
           title="File"
@@ -279,7 +295,7 @@ export default function NiftiViewer() {
         />
       </div>
 
-      {/* Right: Controls */}
+      {/* Right: Controls (kept minimal for upload only) */}
       <div className="lg:col-span-3 order-3">
         <div className="rounded-lg border border-border/60 bg-background/60 p-4 space-y-5">
           <div>
@@ -295,68 +311,6 @@ export default function NiftiViewer() {
               <p className="text-xs text-muted-foreground mt-2">Loaded: {vol.name}</p>
             )}
           </div>
-
-          
-
-          <div className="pt-2 border-t border-white/30">
-            <h3 className="font-medium">Slice View</h3>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                className={`px-3 py-1 rounded border ${sliceType === "axial" ? "bg-primary text-primary-foreground" : "bg-background"}`}
-                onClick={() => setSliceType("axial")}
-              >
-                Axial
-              </button>
-              <button
-                className={`px-3 py-1 rounded border ${sliceType === "coronal" ? "bg-primary text-primary-foreground" : "bg-background"}`}
-                onClick={() => setSliceType("coronal")}
-              >
-                Coronal
-              </button>
-              <button
-                className={`px-3 py-1 rounded border ${sliceType === "sagittal" ? "bg-primary text-primary-foreground" : "bg-background"}`}
-                onClick={() => setSliceType("sagittal")}
-              >
-                Sagittal
-              </button>
-              <button
-                className={`px-3 py-1 rounded border ${sliceType === "multiplanar" ? "bg-primary text-primary-foreground" : "bg-background"}`}
-                onClick={() => setSliceType("multiplanar")}
-              >
-                Multiplanar
-              </button>
-            </div>
-          </div>
-
-          {overlayName && (
-            <div className="rounded-md border border-white/30 bg-background/60 p-3">
-              <h3 className="font-medium">Mask Opacity</h3>
-              <div className="mt-2 flex items-center gap-3">
-                <input
-                  type="range"
-                  min={0}
-                  max={1}
-                  step={0.05}
-                  value={overlayOpacity}
-                  onChange={(e) => {
-                    const v = parseFloat(e.target.value)
-                    setOverlayOpacity(v)
-                    const nv: any = nvRef.current
-                    // Find and update the segmentation overlay specifically
-                    const segVol = nv?.volumes?.find((vol: any) => 
-                      vol?.name?.toLowerCase().includes("_seg")
-                    )
-                    if (segVol) {
-                      segVol.opacity = v
-                      nv.updateGLVolume()
-                    }
-                  }}
-                  className="flex-1"
-                />
-                <span className="w-12 text-right text-sm text-muted-foreground">{Math.round(overlayOpacity * 100)}%</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
