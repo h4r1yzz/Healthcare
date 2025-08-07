@@ -12,12 +12,13 @@ export default function StudyTable({ title, studies }: Props) {
         {title}
       </div>
       <div className="grid grid-cols-12 border-b border-white/20 bg-background/60 px-3 py-2 text-xs text-muted-foreground">
-        <div className="col-span-3">Patient Name</div>
+        <div className="col-span-2">Patient Name</div>
         <div className="col-span-2">Patient ID</div>
         <div className="col-span-2">Study Date/Time</div>
-        <div className="col-span-1">Modality</div>
-        <div className="col-span-1">Scanner</div>
-        <div className="col-span-2">Study Summary</div>
+        <div className="col-span-1">Location</div>
+        <div className="col-span-2">Type</div>
+        <div className="col-span-1">Grade</div>
+        <div className="col-span-1">Size</div>
         <div className="col-span-1">Triage</div>
       </div>
       <div>

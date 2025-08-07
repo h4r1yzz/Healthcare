@@ -5,9 +5,9 @@ import { CalendarDays, Monitor, Search, User2 } from "lucide-react"
 
 export default function Topbar() {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-b-md border-b border-border/60 bg-background/70 p-3">
+    <div className="container max-w-screen-2xl flex items-center justify-between gap-3 rounded-b-md border-b border-border/60 bg-background/70 p-3">
       <div className="flex items-center gap-3">
-        <div className="font-semibold">Study List</div>
+        <div className="font-semibold pl-5">Patient Record</div>
         <Select defaultValue="all">
           <SelectTrigger className="h-8 w-[160px]"><SelectValue placeholder="Select scanner" /></SelectTrigger>
           <SelectContent>
@@ -18,7 +18,7 @@ export default function Topbar() {
         </Select>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 pr-5">
         <div className="hidden text-sm text-muted-foreground md:block">Date: 09/08/2025</div>
       </div>
     </div>
