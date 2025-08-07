@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import DataBrowser from "@/components/visualization/data-browser"
 import LayersTable from "@/components/visualization/layers-table"
 import ViewerOptions from "@/components/visualization/viewer-options"
+import MetadataPanel from "@/components/visualization/metadata-panel"
 
 type LoadedVolume = {
   url: string
@@ -24,6 +25,7 @@ export default function NiftiViewer() {
   const [present, setPresent] = useState<Record<ModKey, boolean> | null>(null)
   const [active, setActive] = useState<Record<ModKey, boolean>>({ flair: false, seg: false, t1: false, t1ce: false, t2: false })
   const [datasetName, setDatasetName] = useState<string | null>(null)
+  const [datasetBaseUrl, setDatasetBaseUrl] = useState<string | null>(null)
   const midRef = useRef<HTMLDivElement | null>(null)
   const [midHeight, setMidHeight] = useState<number | null>(null)
 
@@ -208,6 +210,24 @@ export default function NiftiViewer() {
       t2: false 
     })
     setDatasetName(name ?? (files[0]?.name ?? null))
+    // Infer dataset base url from first file path under /data/<folder>/...
+    if (files.length > 0) {
+      try {
+        const first = files[0].url // e.g., /data/MY2024_001/MY2024_001_flair.nii
+        const parts = first.split("/").filter(Boolean)
+        const idx = parts.indexOf("data")
+        if (idx !== -1 && parts.length > idx + 1) {
+          const folder = parts[idx + 1]
+          setDatasetBaseUrl(`/data/${folder}`)
+        } else {
+          setDatasetBaseUrl(null)
+        }
+      } catch {
+        setDatasetBaseUrl(null)
+      }
+    } else {
+      setDatasetBaseUrl(null)
+    }
   }
 
   function setVisibilityForMod(mod: ModKey, makeActive: boolean) {
@@ -295,23 +315,9 @@ export default function NiftiViewer() {
         />
       </div>
 
-      {/* Right: Controls (kept minimal for upload only) */}
-      <div className="lg:col-span-3 order-3">
-        <div className="rounded-lg border border-border/60 bg-background/60 p-4 space-y-5">
-          <div>
-            <h3 className="font-medium">Load Scan (.nii/.nii.gz)</h3>
-            <input
-              type="file"
-              accept=".nii,.nii.gz,application/gzip"
-              onChange={onLoadBase}
-              className="mt-2 block w-full text-sm"
-              disabled={!ready}
-            />
-            {vol && (
-              <p className="text-xs text-muted-foreground mt-2">Loaded: {vol.name}</p>
-            )}
-          </div>
-        </div>
+      {/* Right: Metadata panel (match height with middle like left browser) */}
+      <div className="lg:col-span-3 order-3" style={midHeight ? { height: `${midHeight}px` } : undefined}>
+        <MetadataPanel datasetBaseUrl={datasetBaseUrl} datasetName={datasetName} />
       </div>
     </div>
   )
