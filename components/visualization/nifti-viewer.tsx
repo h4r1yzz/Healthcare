@@ -23,6 +23,8 @@ export default function NiftiViewer() {
   const [present, setPresent] = useState<Record<ModKey, boolean> | null>(null)
   const [active, setActive] = useState<Record<ModKey, boolean>>({ flair: false, seg: false, t1: false, t1ce: false, t2: false })
   const [datasetName, setDatasetName] = useState<string | null>(null)
+  const midRef = useRef<HTMLDivElement | null>(null)
+  const [midHeight, setMidHeight] = useState<number | null>(null)
 
   useEffect(() => {
     if (!canvasRef.current || nvRef.current) return
@@ -73,6 +75,18 @@ export default function NiftiViewer() {
       }
     }
   }, [sliceType])
+
+  // Keep left browser column the same height as middle (canvas + layers table)
+  useEffect(() => {
+    const el = midRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => {
+      setMidHeight(el.offsetHeight)
+    })
+    ro.observe(el)
+    setMidHeight(el.offsetHeight)
+    return () => ro.disconnect()
+  }, [])
 
   async function loadBaseFromUrl(file: { url: string; name: string }) {
     const nv: any = nvRef.current
@@ -240,14 +254,14 @@ export default function NiftiViewer() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-12">
+    <div className="grid items-stretch gap-6 lg:grid-cols-12">
       {/* Left: File browser */}
-      <div className="lg:col-span-3 order-1">
+      <div className="lg:col-span-3 order-1" style={midHeight ? { height: `${midHeight}px` } : undefined}>
         <DataBrowser onOpenBase={loadBaseFromUrl} onSelectFolder={(files, name) => onSelectFolder(files, name)} />
       </div>
 
       {/* Middle: Visualization canvas */}
-      <div className="lg:col-span-6 order-2">
+      <div ref={midRef} className="lg:col-span-6 order-2">
         <div className="rounded-lg border border-border/60 bg-background/60 p-2">
           <canvas ref={canvasRef} className="w-full aspect-[4/3]" />
         </div>

@@ -58,7 +58,7 @@ export default function DataBrowser({ onOpenBase, onSelectFolder }: Props) {
   }, [root, query])
 
   return (
-    <div className="overflow-hidden rounded-md border border-white/30 bg-background/70 shadow-sm">
+    <div className="flex flex-col max-h-full min-h-0 overflow-hidden rounded-md border border-white/30 bg-background/70 shadow-sm">
       <div className="border-b border-white/30 bg-background/80 px-3 py-2 text-sm font-semibold tracking-wide text-white/90">
         Browser
       </div>
@@ -78,7 +78,7 @@ export default function DataBrowser({ onOpenBase, onSelectFolder }: Props) {
       )}
       {!root && !error && <p className="px-3 py-2 text-sm text-muted-foreground">Loading…</p>}
       {filtered && (
-        <div className="max-h-80 overflow-auto">
+        <div className="flex-1 min-h-0 overflow-auto">
           <Tree
             node={filtered}
             depth={0}
@@ -101,19 +101,17 @@ export default function DataBrowser({ onOpenBase, onSelectFolder }: Props) {
 function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolder }: { node: DataNode; depth: number; onOpenBase: Props["onOpenBase"]; selected?: string | null; selectedFolder?: string | null; onSelectFolder?: Props["onSelectFolder"]; }) {
   const [open, setOpen] = useState(true)
   if (node.type === "file") {
-    const isSelected = selected === node.name
+    // Files are non-interactive in browser list (clicks disabled)
     return (
-      <button
-        className={`w-full text-left border-b border-white/10 px-3 py-3 text-sm focus:outline-none ${isSelected ? "bg-white/10" : "hover:bg-white/5"}`}
+      <div
+        className="w-full cursor-default select-text border-b border-white/10 px-3 py-3 text-left text-sm text-white/90 hover:bg-white/5"
         style={{ paddingLeft: depth * 16 }}
-        onClick={() => onOpenBase({ url: node.url!, name: node.name })}
         title={node.relPath}
       >
         <div className="flex items-center justify-between">
-          <span>{node.name}</span>
-          {isSelected && <Check className="h-4 w-4 text-green-400" />}
+          <span className="truncate">{node.name}</span>
         </div>
-      </button>
+      </div>
     )
   }
   return (
@@ -122,6 +120,7 @@ function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolde
         <div
           className="flex cursor-pointer select-none items-center border-b border-white/10 px-3 py-3 text-sm hover:bg-white/5"
           style={{ paddingLeft: depth * 14 }}
+          onClick={() => setOpen((v) => !v)}
         >
           {open ? (
             <ChevronDown className="mr-1 h-4 w-4 text-muted-foreground" />
@@ -129,12 +128,14 @@ function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolde
             <ChevronRight className="mr-1 h-4 w-4 text-muted-foreground" />
           )}
           <Folder className="mr-2 h-4 w-4 text-muted-foreground" />
-          <button className="flex-1 text-left" onClick={() => setOpen((v) => !v)}>
-            <span className="font-medium">{node.name}</span>
-          </button>
+          <span className="flex-1 font-medium text-left">{node.name}</span>
           {onSelectFolder && (
             <button
-              className={`rounded border px-2 py-0.5 text-xs hover:bg-white/10 ${selectedFolder === node.name ? "border-green-500 bg-green-500/20 text-green-400" : "border-white/20 text-white/60"}`}
+              className={`rounded border px-2 py-0.5 text-xs transition-colors ${
+                selectedFolder === node.name
+                  ? "border-green-600 bg-green-600 text-white"
+                  : "border-white/30 text-white/70 hover:bg-white/10"
+              }`}
               onClick={(e) => {
                 e.stopPropagation()
                 // collect all file descendants
@@ -148,11 +149,7 @@ function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolde
               }}
               title="Load all scans from this folder"
             >
-              {selectedFolder === node.name ? (
-                <Check className="h-4 w-4" />
-              ) : (
-                "Load"
-              )}
+              {selectedFolder === node.name ? <Check className="h-4 w-4" /> : "Load"}
             </button>
           )}
         </div>

@@ -40,14 +40,18 @@ export default function LayersTable({
             <div key={m} className="flex justify-start">
               {has ? (
                 <button
-                  className={`flex h-6 w-6 items-center justify-center rounded-full border ${isActive ? "border-green-500 bg-green-500/20" : "border-white/20 hover:bg-white/10"}`}
+                  className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${
+                    isActive
+                      ? "border-green-600 bg-green-600"
+                      : "border-white/30 hover:bg-white/10"
+                  }`}
                   title={isActive ? "Visible" : "Hidden"}
                   onClick={() => onToggle(m, !isActive)}
                 >
                   {isActive ? (
                     <svg
                       viewBox="0 0 24 24"
-                      className="h-4 w-4 text-green-400"
+                      className="h-4 w-4 text-white"
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="3"
