@@ -12,7 +12,7 @@ export default function VisualizationPage() {
 
       <div className="relative z-10">
         <Navbar />
-        <main className="container max-w-screen-2xl py-8 md:py-12">
+        <main className="container max-w-screen-2xl py-2 md:py-4">
           <NiftiViewer />
         </main>
       </div>

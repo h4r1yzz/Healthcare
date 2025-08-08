@@ -28,13 +28,11 @@ type Props = {
 }
 
 function getConfidenceColor(value?: number): string {
-  if (typeof value !== "number") return "bg-primary"
-  // value expected in [0, 1]
-  if (value < 0.4) return "bg-red-500"         // <40%
-  if (value < 0.7) return "bg-yellow-400"      // 40–69%
-  if (value < 0.85) return "bg-green-600"      // 70–84%
-  if (value < 0.95) return "bg-green-400"      // 85–94%
-  return "bg-emerald-400"                       // 95–100%
+  if (typeof value !== "number") return "bg-green-600"
+  // Three simple bands: red (<40%), orange (40–69%), green (>=70%)
+  if (value < 0.5) return "bg-red-500"
+  if (value < 0.8) return "bg-orange-400"
+  return "bg-green-600"
 }
 
 function getConfidenceStyle(value?: number): React.CSSProperties | undefined {
@@ -97,51 +95,53 @@ export default function MetadataPanel({ datasetBaseUrl, datasetName }: Props) {
 
         {datasetBaseUrl && !loading && !error && data && (
           <div className="space-y-4">
-            {/* Summary section */}
-            <div className="rounded-md border border-white/15 bg-background/70 p-3">
-              <div className="flex flex-wrap items-center gap-2 text-sm">
-                {data.date && (
-                  <div>
-                    <span className="text-muted-foreground">Date:</span> {data.date}
-                  </div>
-                )}
-                {data.final_diagnosis && (
-                  <div>
-                    <span className="text-muted-foreground">Final diagnosis:</span> {data.final_diagnosis}
-                  </div>
-                )}
-              </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-                {typeof data.crowdlab_consensus === "number" && (
-                  <div className="w-full">
-                    <div className="mb-1 flex items-center justify-between">
-                      <span className="text-sm font-medium">Consensus</span>
-                      <span className="text-xs text-muted-foreground">{Math.round(data.crowdlab_consensus * 100)}%</span>
+            {/* Summary section (distinguished container) */}
+            <div className="rounded-md border-2 border-white/40 p-1">
+              <div className="rounded-md border-2 border-double border-white/50 bg-background/70 p-3">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  {data.date && (
+                    <div>
+                      <span className="text-muted-foreground">Date:</span> {data.date}
                     </div>
-                    <Progress
-                      value={Math.round(data.crowdlab_consensus * 100)}
-                      indicatorClassName={getConfidenceColor(data.crowdlab_consensus)}
-                      indicatorStyle={getConfidenceStyle(data.crowdlab_consensus)}
-                    />
-                  </div>
-                )}
-              </div>
-              <div className="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                {data.treatment && (
-                  <div>
-                    <span className="text-muted-foreground">Treatment:</span> {data.treatment}
-                  </div>
-                )}
-                {data.outcome && (
-                  <div>
-                    <span className="text-muted-foreground">Outcome:</span> {data.outcome}
-                  </div>
-                )}
-                {data.follow_up && (
-                  <div className="sm:col-span-2">
-                    <span className="text-muted-foreground">Follow-up:</span> {data.follow_up}
-                  </div>
-                )}
+                  )}
+                  {data.final_diagnosis && (
+                    <div>
+                      <span className="text-muted-foreground">Final diagnosis:</span> {data.final_diagnosis}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                  {typeof data.crowdlab_consensus === "number" && (
+                    <div className="w-full">
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-sm font-medium">Consensus</span>
+                        <span className="text-xs text-muted-foreground">{Math.round(data.crowdlab_consensus * 100)}%</span>
+                      </div>
+                      <Progress
+                        value={Math.round(data.crowdlab_consensus * 100)}
+                        indicatorClassName={getConfidenceColor(data.crowdlab_consensus)}
+                        indicatorStyle={getConfidenceStyle(data.crowdlab_consensus)}
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  {data.treatment && (
+                    <div>
+                      <span className="text-muted-foreground">Treatment:</span> {data.treatment}
+                    </div>
+                  )}
+                  {data.outcome && (
+                    <div>
+                      <span className="text-muted-foreground">Outcome:</span> {data.outcome}
+                    </div>
+                  )}
+                  {data.follow_up && (
+                    <div className="sm:col-span-2">
+                      <span className="text-muted-foreground">Follow-up:</span> {data.follow_up}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
