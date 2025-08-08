@@ -5,7 +5,14 @@ import MouseMoveEffect from "@/components/mouse-move-effect"
 
 export const metadata: Metadata = {
   title: "NeuroGrade AI",
-  description: "NeuroGrade AI delivers innovative, high-performance software solutions for businesses of the future."
+  description: "NeuroGrade AI delivers innovative, high-performance software solutions for businesses of the future.",
+  icons: {
+    icon: [
+      { url: "/icon/icons8-brain-forma-thin-filled-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icon/icons8-brain-forma-thin-filled-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon/icons8-brain-forma-thin-filled-96.png", sizes: "96x96", type: "image/png" },
+    ],
+  },
 }
 
 export default function RootLayout({
