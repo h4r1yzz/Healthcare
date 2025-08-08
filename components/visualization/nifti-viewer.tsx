@@ -13,7 +13,7 @@ export default function NiftiViewer() {
   const [ready, setReady] = useState(false)
   const [vol, setVol] = useState<LoadedVolume | null>(null)
   const [sliceType, setSliceType] = useState<"axial" | "coronal" | "sagittal" | "multiplanar">("axial")
-  const DEFAULT_PUBLIC_VOLUME = "/BraTS20_Validation_008_t1.nii"
+  const DEFAULT_PUBLIC_VOLUME = "/BraTS20_Validation_008_flair.nii"
 
   useEffect(() => {
     if (!canvasRef.current || nvRef.current) return
@@ -32,8 +32,8 @@ export default function NiftiViewer() {
       nv.attachToCanvas(canvasRef.current as HTMLCanvasElement)
       // auto-load default volume from public
       try {
-        await nv.loadVolumes([{ url: DEFAULT_PUBLIC_VOLUME, name: "BraTS20_Validation_008_t1.nii" }])
-        setVol({ url: DEFAULT_PUBLIC_VOLUME, name: "BraTS20_Validation_008_t1.nii" })
+        await nv.loadVolumes([{ url: DEFAULT_PUBLIC_VOLUME, name: "BraTS20_Validation_008_flair.nii" }])
+        setVol({ url: DEFAULT_PUBLIC_VOLUME, name: "BraTS20_Validation_008_flair.nii" })
       } catch {}
       setReady(true)
     })()
