@@ -12,7 +12,7 @@ export default function NiftiViewer() {
   const nvRef = useRef<any>(null)
   const [ready, setReady] = useState(false)
   const [vol, setVol] = useState<LoadedVolume | null>(null)
-  const [sliceType, setSliceType] = useState<"axial" | "coronal" | "sagittal" | "multiplanar">("axial")
+  const [sliceType, setSliceType] = useState<"axial" | "coronal" | "sagittal" | "multiplanar">("multiplanar")
   const DEFAULT_PUBLIC_VOLUME = "/BraTS20_Validation_008_flair.nii"
 
   useEffect(() => {
@@ -103,7 +103,7 @@ export default function NiftiViewer() {
 
           <div className="pt-2 border-t border-border/40">
             <h3 className="font-medium">Slice View</h3>
-            <div className="mt-2 flex gap-2">
+            <div className="mt-2 flex flex-wrap gap-2">
               <button
                 className={`px-3 py-1 rounded border ${sliceType === "axial" ? "bg-primary text-primary-foreground" : "bg-background"}`}
                 onClick={() => setSliceType("axial")}

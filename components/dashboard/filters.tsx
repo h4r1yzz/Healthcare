@@ -7,21 +7,21 @@ export default function Filters() {
       <div className="md:col-span-1">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Patient Name</div>
         <Input
-          placeholder="Search among records"
+          placeholder="Patient Name"
           className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
       <div className="md:col-span-1">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Patient ID</div>
         <Input
-          placeholder="Search among records"
+          placeholder="Patient ID"
           className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
       <div className="md:col-span-1">
         <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Study Date/Time</div>
         <Input
-          placeholder="Search among records"
+          placeholder="Date/Time"
           className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
