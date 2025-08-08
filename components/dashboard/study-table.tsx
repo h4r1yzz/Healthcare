@@ -18,7 +18,7 @@ export default function StudyTable({ title, studies }: Props) {
         <div className="col-span-1">Modality</div>
         <div className="col-span-1">Scanner</div>
         <div className="col-span-2">Study Summary</div>
-        <div className="col-span-1 text-right">Triage</div>
+        <div className="col-span-1">Triage</div>
       </div>
       <div>
         {studies.map((s, i) => (

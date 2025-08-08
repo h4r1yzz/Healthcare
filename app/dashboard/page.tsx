@@ -17,8 +17,8 @@ const unread: Study[] = [
 const read: Study[] = [
   { patientName: "Frederik P. Gregersen", patientId: "230756-3633", dateTime: "10/02/2024 11:46", modality: "MR", scanner: "MRI Room 2", summary: "Suspicion of infarct", triage: "High" },
   { patientName: "Line K. Hermansen", patientId: "020438-0376", dateTime: "01/02/2024 05:25", modality: "MR", scanner: "MRI Room 1", summary: "Suspicion of hemorrhage", triage: "High" },
-  { patientName: "Katrine B. Juhl", patientId: "020885-2604", dateTime: "31/01/2024 16:57", modality: "MR", scanner: "MRI Room 1", summary: "Suspicion of infarct, suspicion of hemorrhage", triage: "High" },
-  { patientName: "Amanda A. Olesen", patientId: "250476-0920", dateTime: "29/01/2024 10:40", modality: "MR", scanner: "MRI Room 1", summary: "Suspicion of infarct, suspicion of hemorrhage", triage: "High" },
+  { patientName: "Katrine B. Juhl", patientId: "020885-2604", dateTime: "31/01/2024 16:57", modality: "MR", scanner: "MRI Room 1", summary: "Suspicion of infarct,hemorrhage", triage: "High" },
+  { patientName: "Amanda A. Olesen", patientId: "250476-0920", dateTime: "29/01/2024 10:40", modality: "MR", scanner: "MRI Room 1", summary: "Suspicion of infarct,hemorrhage", triage: "High" },
   { patientName: "Thea W. Vestergaard", patientId: "160696-0294", dateTime: "15/02/2024 11:33", modality: "MR", scanner: "MRI Room 2", summary: "Suspicion of tumor", triage: "Medium" },
 ]
 

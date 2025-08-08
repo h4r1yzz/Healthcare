@@ -3,32 +3,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function Filters() {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-6 ">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-6 text-black">
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Patient Name</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Patient Name</div>
         <Input
           placeholder="Search among records"
-          className="mt-1 h-9 border-white/30 bg-background/70 text-white placeholder:text-white/50 focus-visible:ring-white/30 focus-visible:ring-offset-0"
+          className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Patient ID</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Patient ID</div>
         <Input
           placeholder="Search among records"
-          className="mt-1 h-9 border-white/30 bg-background/70 text-white placeholder:text-white/50 focus-visible:ring-white/30 focus-visible:ring-offset-0"
+          className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Study Date/Time</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Study Date/Time</div>
         <Input
           placeholder="Search among records"
-          className="mt-1 h-9 border-white/30 bg-background/70 text-white placeholder:text-white/50 focus-visible:ring-white/30 focus-visible:ring-offset-0"
+          className="mt-1 h-9 border-gray-300 bg-white text-black placeholder:text-muted-foreground focus-visible:ring-black/20 focus-visible:ring-offset-0"
         />
       </div>
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Modality</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Modality</div>
         <Select defaultValue="all">
-          <SelectTrigger className="mt-1 h-9 border-white/30 bg-background/70 text-white focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
+          <SelectTrigger className="mt-1 h-9 border-gray-300 bg-white text-black focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="mr">MR</SelectItem>
@@ -37,9 +37,9 @@ export default function Filters() {
         </Select>
       </div>
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Scanner</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Scanner</div>
         <Select defaultValue="all">
-          <SelectTrigger className="mt-1 h-9 border-white/30 bg-background/70 text-white focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
+          <SelectTrigger className="mt-1 h-9 border-gray-300 bg-white text-black focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="room1">MRI Room 1</SelectItem>
@@ -48,9 +48,9 @@ export default function Filters() {
         </Select>
       </div>
       <div className="md:col-span-1">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-white/80">Triage</div>
+        <div className="text-[11px] font-semibold uppercase tracking-wide text-white">Triage</div>
         <Select defaultValue="all">
-          <SelectTrigger className="mt-1 h-9 border-white/30 bg-background/70 text-white focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
+          <SelectTrigger className="mt-1 h-9 border-gray-300 bg-white text-black focus:ring-0"><SelectValue placeholder="All" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="high">High</SelectItem>
