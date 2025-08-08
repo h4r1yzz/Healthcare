@@ -1,15 +1,11 @@
 import "./globals.css"
-import { Inter } from 'next/font/google'
 import type React from "react"
 import type { Metadata } from "next"
 import MouseMoveEffect from "@/components/mouse-move-effect"
 
-const inter = Inter({ subsets: ["latin"] })
-
 export const metadata: Metadata = {
   title: "MedScan",
-  description: "MedScan delivers innovative, high-performance software solutions for businesses of the future.",
-    generator: 'v0.dev'
+  description: "MedScan delivers innovative, high-performance software solutions for businesses of the future."
 }
 
 export default function RootLayout({
@@ -19,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.className} text-foreground antialiased`}>
+      <body className="text-foreground antialiased">
         <MouseMoveEffect />
         {children}
       </body>

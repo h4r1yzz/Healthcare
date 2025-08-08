@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Local font: AvantGarde Demi */
+@font-face {
+  font-family: 'avantgardedemi';
+  src: url('/fonts/AvantGarde%20Demi.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -54,7 +63,7 @@
     @apply border-border;
   }
   body {
-    @apply text-foreground;
+    @apply text-foreground font-sans;
     background-color: #000103;
     background-image: linear-gradient(to right, #020617, #030d2b, #09203b);
   }
