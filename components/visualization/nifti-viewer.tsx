@@ -13,6 +13,8 @@ export default function NiftiViewer() {
   const [ready, setReady] = useState(false)
   const [vol, setVol] = useState<LoadedVolume | null>(null)
   const [sliceType, setSliceType] = useState<"axial" | "coronal" | "sagittal" | "multiplanar">("multiplanar")
+  const [overlayName, setOverlayName] = useState<string | null>(null)
+  const [overlayOpacity, setOverlayOpacity] = useState<number>(0.5)
   const DEFAULT_PUBLIC_VOLUME = "/BraTS20_Validation_008_flair.nii"
 
   useEffect(() => {
@@ -77,6 +79,19 @@ export default function NiftiViewer() {
     await nv.loadVolumes([{ url: loaded.url, name: loaded.name }])
   }
 
+  async function onLoadMask(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const arrayBuffer = await file.arrayBuffer()
+    const blob = new Blob([arrayBuffer])
+    const url = URL.createObjectURL(blob)
+    const name = file.name
+    const nv: any = nvRef.current
+    // Load overlay as label image with a red colormap; adjust as needed
+    await nv.addVolumeFromUrl({ url, name, isLabel: true, colormap: "red", opacity: overlayOpacity })
+    setOverlayName(name)
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-12">
       <div className="lg:col-span-8 order-2 lg:order-1">
@@ -98,6 +113,20 @@ export default function NiftiViewer() {
             />
             {vol && (
               <p className="text-xs text-muted-foreground mt-2">Loaded: {vol.name}</p>
+            )}
+          </div>
+
+          <div>
+            <h3 className="font-medium">Load Segmentation (optional)</h3>
+            <input
+              type="file"
+              accept=".nii,.nii.gz,application/gzip"
+              onChange={onLoadMask}
+              className="mt-2 block w-full text-sm"
+              disabled={!ready}
+            />
+            {overlayName && (
+              <p className="text-xs text-muted-foreground mt-2">Mask: {overlayName}</p>
             )}
           </div>
 
@@ -130,6 +159,33 @@ export default function NiftiViewer() {
               </button>
             </div>
           </div>
+
+          {overlayName && (
+            <div>
+              <h3 className="font-medium">Mask Opacity</h3>
+              <div className="mt-2 flex items-center gap-3">
+                <input
+                  type="range"
+                  min={0}
+                  max={1}
+                  step={0.05}
+                  value={overlayOpacity}
+                  onChange={(e) => {
+                    const v = parseFloat(e.target.value)
+                    setOverlayOpacity(v)
+                    const nv: any = nvRef.current
+                    const ov = nv?.volumes?.[1]
+                    if (ov) {
+                      ov.opacity = v
+                      nv.updateGLVolume()
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <span className="w-12 text-right text-sm text-muted-foreground">{Math.round(overlayOpacity * 100)}%</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
