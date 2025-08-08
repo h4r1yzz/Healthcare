@@ -44,7 +44,7 @@ export default function UploadPanel({ onProcess }: Props) {
             </AlertDescription>
           </Alert>
 
-          <Button size="lg" disabled={!allProvided} className="md:ml-auto md:min-w-[260px]">
+          <Button size="lg" disabled={!allProvided} onClick={handleProcess} className="md:ml-auto md:min-w-[260px]">
             Process Sequences
           </Button>
         </div>
