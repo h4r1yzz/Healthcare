@@ -17,8 +17,8 @@ export default function Navbar() {
           <Link href="/dashboard" className="transition-colors text-foreground/80 hover:text-foreground">
             Dashboard
           </Link>
-          <Link href="/cases" className="transition-colors text-foreground/80 hover:text-foreground">
-            Cases
+          <Link href="/visualization" className="transition-colors text-foreground/80 hover:text-foreground">
+            Visualization
           </Link>
           <Link href="/reports" className="transition-colors text-foreground/80 hover:text-foreground">
             Reports
