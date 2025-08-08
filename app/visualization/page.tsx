@@ -13,11 +13,6 @@ export default function VisualizationPage() {
       <div className="relative z-10">
         <Navbar />
         <main className="container max-w-screen-2xl py-8 md:py-12">
-          <div className="mb-8">
-            <h1 className="text-2xl font-semibold tracking-tight">Visualization</h1>
-            <p className="text-muted-foreground mt-2 max-w-2xl">Visualize NIfTI (.nii/.nii.gz) brain scans directly in your browser.</p>
-          </div>
-
           <NiftiViewer />
         </main>
       </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { Search, ChevronDown, ChevronRight, Folder } from "lucide-react"
+import { Search, ChevronDown, ChevronRight, Folder, Check } from "lucide-react"
 
 export type DataNode = {
   type: "dir" | "file"
@@ -14,13 +14,15 @@ export type DataNode = {
 type Props = {
   onOpenBase: (file: { url: string; name: string }) => void
   onOpenMask?: (file: { url: string; name: string }) => void
+  onSelectFolder?: (files: Array<{ url: string; name: string }>, folderName: string) => void
 }
 
-export default function DataBrowser({ onOpenBase }: Props) {
+export default function DataBrowser({ onOpenBase, onSelectFolder }: Props) {
   const [root, setRoot] = useState<DataNode | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState("")
   const [selected, setSelected] = useState<string | null>(null)
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(null)
 
   useEffect(() => {
     let active = true
@@ -85,13 +87,18 @@ export default function DataBrowser({ onOpenBase }: Props) {
               onOpenBase(f)
             }}
             selected={selected}
+            selectedFolder={selectedFolder}
+            onSelectFolder={(files, name) => {
+              setSelectedFolder(name)
+              onSelectFolder?.(files, name)
+            }}
           />
         </div>
       )}
     </div>
   )}
 
-function Tree({ node, depth, onOpenBase, selected }: { node: DataNode; depth: number; onOpenBase: Props["onOpenBase"]; selected?: string | null; }) {
+function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolder }: { node: DataNode; depth: number; onOpenBase: Props["onOpenBase"]; selected?: string | null; selectedFolder?: string | null; onSelectFolder?: Props["onSelectFolder"]; }) {
   const [open, setOpen] = useState(true)
   if (node.type === "file") {
     const isSelected = selected === node.name
@@ -102,7 +109,10 @@ function Tree({ node, depth, onOpenBase, selected }: { node: DataNode; depth: nu
         onClick={() => onOpenBase({ url: node.url!, name: node.name })}
         title={node.relPath}
       >
-        {node.name}
+        <div className="flex items-center justify-between">
+          <span>{node.name}</span>
+          {isSelected && <Check className="h-4 w-4 text-green-400" />}
+        </div>
       </button>
     )
   }
@@ -112,7 +122,6 @@ function Tree({ node, depth, onOpenBase, selected }: { node: DataNode; depth: nu
         <div
           className="flex cursor-pointer select-none items-center border-b border-white/10 px-3 py-3 text-sm hover:bg-white/5"
           style={{ paddingLeft: depth * 14 }}
-          onClick={() => setOpen((v) => !v)}
         >
           {open ? (
             <ChevronDown className="mr-1 h-4 w-4 text-muted-foreground" />
@@ -120,11 +129,36 @@ function Tree({ node, depth, onOpenBase, selected }: { node: DataNode; depth: nu
             <ChevronRight className="mr-1 h-4 w-4 text-muted-foreground" />
           )}
           <Folder className="mr-2 h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{node.name}</span>
+          <button className="flex-1 text-left" onClick={() => setOpen((v) => !v)}>
+            <span className="font-medium">{node.name}</span>
+          </button>
+          {onSelectFolder && (
+            <button
+              className={`rounded border px-2 py-0.5 text-xs hover:bg-white/10 ${selectedFolder === node.name ? "border-green-500 bg-green-500/20 text-green-400" : "border-white/20 text-white/60"}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                // collect all file descendants
+                const collect = (n: DataNode, acc: Array<{ url: string; name: string }>) => {
+                  if (n.type === "file" && n.url) acc.push({ url: n.url, name: n.name })
+                  n.children?.forEach((c) => collect(c as DataNode, acc))
+                }
+                const files: Array<{ url: string; name: string }> = []
+                collect(node, files)
+                onSelectFolder(files, node.name)
+              }}
+              title="Load all scans from this folder"
+            >
+              {selectedFolder === node.name ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                "Load"
+              )}
+            </button>
+          )}
         </div>
       )}
       {open && node.children?.map((child) => (
-        <Tree key={child.relPath} node={child as DataNode} depth={depth + 1} onOpenBase={onOpenBase} selected={selected} />
+        <Tree key={child.relPath} node={child as DataNode} depth={depth + 1} onOpenBase={onOpenBase} selected={selected} selectedFolder={selectedFolder} onSelectFolder={onSelectFolder} />
       ))}
     </div>
   )
