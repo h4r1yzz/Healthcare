@@ -282,37 +282,41 @@ export default function NiftiViewer() {
       </div>
 
       {/* Middle: Visualization canvas */}
-      <div ref={midRef} className="lg:col-span-6 order-2">
+      <div ref={midRef} className="lg:col-span-6 order-2 flex flex-col">
         <div className="rounded-lg border border-border/60 bg-background/60 p-2">
           <canvas ref={canvasRef} className="w-full aspect-[4/3]" />
         </div>
         {/* Options toolbar below canvas */}
-        <ViewerOptions
-          sliceType={sliceType}
-          onChangeSliceType={setSliceType}
-          overlayOpacity={overlayOpacity}
-          onChangeOverlayOpacity={(v) => {
-            setOverlayOpacity(v)
-            const nv: any = nvRef.current
-            const segVol = nv?.volumes?.find((vol: any) => vol?.name?.toLowerCase().includes("_seg"))
-            if (segVol) {
-              segVol.opacity = v
-              nv.updateGLVolume()
-            }
-          }}
-        />
+        <div className="shrink-0">
+          <ViewerOptions
+            sliceType={sliceType}
+            onChangeSliceType={setSliceType}
+            overlayOpacity={overlayOpacity}
+            onChangeOverlayOpacity={(v) => {
+              setOverlayOpacity(v)
+              const nv: any = nvRef.current
+              const segVol = nv?.volumes?.find((vol: any) => vol?.name?.toLowerCase().includes("_seg"))
+              if (segVol) {
+                segVol.opacity = v
+                nv.updateGLVolume()
+              }
+            }}
+          />
+        </div>
         {/* Dataset layers table (always visible) */}
-        <LayersTable
-          title="File"
-          datasetName={datasetName || vol?.name || "—"}
-          modalityOrder={modalityOrder}
-          present={present || { flair: false, seg: false, t1: false, t1ce: false, t2: false }}
-          active={active}
-          onToggle={(m, next) => {
-            setActive((a) => ({ ...a, [m]: next }))
-            setVisibilityForMod(m, next)
-          }}
-        />
+        <div className="mt-2 grow overflow-auto">
+          <LayersTable
+            title="File"
+            datasetName={datasetName || vol?.name || "—"}
+            modalityOrder={modalityOrder}
+            present={present || { flair: false, seg: false, t1: false, t1ce: false, t2: false }}
+            active={active}
+            onToggle={(m, next) => {
+              setActive((a) => ({ ...a, [m]: next }))
+              setVisibilityForMod(m, next)
+            }}
+          />
+        </div>
       </div>
 
       {/* Right: Metadata panel (match height with middle like left browser) */}

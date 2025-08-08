@@ -149,7 +149,7 @@ function Tree({ node, depth, onOpenBase, selected, selectedFolder, onSelectFolde
               }}
               title="Load all scans from this folder"
             >
-              {selectedFolder === node.name ? <Check className="h-5 w-5" strokeWidth={3.2} /> : "Load"}
+              {selectedFolder === node.name ? <Check className="h-4 w-4" strokeWidth={3.2} /> : "Load"}
             </button>
           )}
         </div>
