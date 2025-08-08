@@ -47,7 +47,9 @@ cypress/videos/
 cypress/screenshots/
 
 # Binary/artifact media (project-specific)
-public/output.*
+
+
+public/data/
 
 # Optional package manager files not used here
 .pnp.*

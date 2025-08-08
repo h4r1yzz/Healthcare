@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import DataBrowser from "@/components/visualization/data-browser"
 
 type LoadedVolume = {
   url: string
@@ -67,6 +68,29 @@ export default function NiftiViewer() {
     }
   }, [sliceType])
 
+  async function loadBaseFromUrl(file: { url: string; name: string }) {
+    const nv: any = nvRef.current
+    if (!nv) return
+    // Clear all existing volumes (base + overlays)
+    if (nv.volumes?.length) {
+      for (const v of [...nv.volumes]) nv.removeVolume(v)
+    }
+    await nv.loadVolumes([{ url: file.url, name: file.name }])
+    setVol({ url: file.url, name: file.name })
+    setOverlayName(null)
+  }
+
+  async function loadMaskFromUrl(file: { url: string; name: string }) {
+    const nv: any = nvRef.current
+    if (!nv) return
+    // Remove existing overlays while keeping base (index 0)
+    if (nv.volumes?.length > 1) {
+      for (let i = nv.volumes.length - 1; i >= 1; i--) nv.removeVolume(nv.volumes[i])
+    }
+    await nv.addVolumeFromUrl({ url: file.url, name: file.name, isLabel: true, colormap: "red", opacity: overlayOpacity })
+    setOverlayName(file.name)
+  }
+
   async function onLoadBase(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
@@ -94,13 +118,20 @@ export default function NiftiViewer() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-12">
-      <div className="lg:col-span-8 order-2 lg:order-1">
+      {/* Left: File browser */}
+      <div className="lg:col-span-3 order-1">
+        <DataBrowser onOpenBase={loadBaseFromUrl} />
+      </div>
+
+      {/* Middle: Visualization canvas */}
+      <div className="lg:col-span-6 order-2">
         <div className="rounded-lg border border-border/60 bg-background/60 p-2">
           <canvas ref={canvasRef} className="w-full aspect-[4/3]" />
         </div>
       </div>
 
-      <div className="lg:col-span-4 order-1 lg:order-2">
+      {/* Right: Controls */}
+      <div className="lg:col-span-3 order-3">
         <div className="rounded-lg border border-border/60 bg-background/60 p-4 space-y-5">
           <div>
             <h3 className="font-medium">Load Scan (.nii/.nii.gz)</h3>
@@ -116,21 +147,9 @@ export default function NiftiViewer() {
             )}
           </div>
 
-          <div>
-            <h3 className="font-medium">Load Segmentation (optional)</h3>
-            <input
-              type="file"
-              accept=".nii,.nii.gz,application/gzip"
-              onChange={onLoadMask}
-              className="mt-2 block w-full text-sm"
-              disabled={!ready}
-            />
-            {overlayName && (
-              <p className="text-xs text-muted-foreground mt-2">Mask: {overlayName}</p>
-            )}
-          </div>
+          
 
-          <div className="pt-2 border-t border-border/40">
+          <div className="pt-2 border-t border-white/30">
             <h3 className="font-medium">Slice View</h3>
             <div className="mt-2 flex flex-wrap gap-2">
               <button
@@ -161,7 +180,7 @@ export default function NiftiViewer() {
           </div>
 
           {overlayName && (
-            <div>
+            <div className="rounded-md border border-white/30 bg-background/60 p-3">
               <h3 className="font-medium">Mask Opacity</h3>
               <div className="mt-2 flex items-center gap-3">
                 <input

@@ -4,8 +4,8 @@ import type { Metadata } from "next"
 import MouseMoveEffect from "@/components/mouse-move-effect"
 
 export const metadata: Metadata = {
-  title: "MedScan",
-  description: "MedScan delivers innovative, high-performance software solutions for businesses of the future."
+  title: "NeuroGrade AI",
+  description: "NeuroGrade AI delivers innovative, high-performance software solutions for businesses of the future."
 }
 
 export default function RootLayout({

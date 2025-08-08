@@ -13,7 +13,7 @@ export default function Hero() {
           playsInline
           preload="auto"
           aria-hidden
-          className="absolute inset-0 w-full h-full object-cover opacity-60 pointer-events-none select-none"
+          className="absolute inset-0 w-full h-full object-cover opacity-80 pointer-events-none select-none"
         >
           <source src="/output.webm" type="video/webm" />
           <source src="/output.mp4" type="video/mp4" />
