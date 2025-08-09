@@ -31,7 +31,6 @@ from backend.main import (
 
 # Import similarity search functionality
 from backend.similarity_search import search_similar_cases, is_similarity_search_available
-from backend.multifieldannotator_predictor import MultiFieldAnnotatorPredictor
 
 # Import overlay generation functionality
 from backend.overlay_generator import get_overlay_image_bytes
@@ -70,16 +69,6 @@ class PredictResponse(BaseModel):
     output_url: str
     visualization_url: str
     similarity_results: Optional[List[SimilarityMatch]] = None
-
-
-class ConsensusRequest(BaseModel):
-    scan_id: str
-    assessments: List[Dict[str, Any]]
-
-
-class ConsensusResponse(BaseModel):
-    consensus: Dict[str, str]
-    saved_json_path: str
 
 
 _model = None
@@ -260,49 +249,6 @@ async def predict(
         visualization_url=viz_url,
         similarity_results=similarity_results
     )
-
-
-@app.post("/consensus", response_model=ConsensusResponse)
-async def consensus(request: ConsensusRequest):
-    """
-    Generate consensus labels from multiple radiologist assessments.
-    """
-    try:
-        # Initialize the predictor
-        predictor = MultiFieldAnnotatorPredictor(verbose=True)
-        
-        # Convert assessments to the format expected by add_new_scan
-        scan_data = {
-            request.scan_id: {}
-        }
-        
-        for assessment in request.assessments:
-            radiologist_name = assessment.get("radiologist", "unknown")
-            scan_data[request.scan_id][radiologist_name] = {
-                "Tumor Location": assessment.get("tumor_location", ""),
-                "Tumor Type": assessment.get("tumor_type", ""),
-                "Tumor Grade": assessment.get("tumor_grade", ""),
-                "Size": assessment.get("size", ""),
-                "Confidence": assessment.get("confidence", "50%")
-            }
-        
-        # Process the scan data
-        result = predictor.add_new_scan(scan_data)
-        
-        # Get the consensus for this scan
-        consensus_labels = result["consensus_labels"].get(request.scan_id, {})
-        
-        # Determine the saved JSON path
-        case_dir = os.path.join(PUBLIC_DATA_DIR, request.scan_id)
-        json_path = os.path.join(case_dir, "consensus_labels.json")
-        
-        return ConsensusResponse(
-            consensus=consensus_labels,
-            saved_json_path=json_path
-        )
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to generate consensus: {str(e)}")
 
 
 @app.get("/overlay/{case_id}")

@@ -70,3 +70,4 @@ backend/.ipynb
 backend/myenv
 backend/.ipynb
 *.ipynb
+public/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData
