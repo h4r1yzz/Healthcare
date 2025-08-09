@@ -5,7 +5,7 @@ import UploadPanel from "@/components/analysis/upload-panel"
 import SimilarityResults from "@/components/analysis/similarity-results"
 import { useMemo, useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, CheckCircle, Clock } from "lucide-react"
+import { Loader2, CheckCircle, Clock, Brain } from "lucide-react"
 
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
@@ -416,10 +416,10 @@ export default function AnalysisPage() {
           {doneProcessing && processResult && (
             <Card className="border-green-500/30 bg-green-950/20">
               <CardContent className="p-6">
-                <div className="text-2xl font-semibold tracking-wide text-green-400 mb-6">Processing Complete</div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   {/* Left column: Results info */}
                   <div className="space-y-4">
+                  <div className="text-2xl font-semibold text-green-400 mb-6">Processing Complete</div>
                     <div>
                       <div className="text-green-300 font-medium">Case ID:</div>
                       <div className="text-green-200">{processResult.case}</div>
@@ -449,23 +449,25 @@ export default function AnalysisPage() {
                   </div>
 
                   {/* Right column: Visualization */}
-                  <div className="flex flex-col">
-                    <div className="text-green-300 font-medium mb-2">Segmentation Preview</div>
-                    <div className="relative rounded-lg overflow-hidden border border-green-500/30 bg-black/50 self-start">
-                      <img
-                        src={processResult.visualization_url}
-                        alt="Brain tumor segmentation visualization"
-                        className="w-full h-auto max-h-80 min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] object-contain"
-                        onError={(e) => {
-                          // Fallback if image fails to load
-                          e.currentTarget.style.display = 'none'
-                          e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                        }}
-                      />
-                      <div className="hidden flex items-center justify-center h-80 min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] text-green-300">
-                        <div className="text-center">
-                          <div className="text-lg">Visualization Unavailable</div>
-                          <div className="text-sm opacity-70">Please check the segmentation file</div>
+                  <div className="flex flex-col items-end justify-start -mt-6">
+                    <div className="flex flex-col">
+                      <div className="text-green-300 font-medium mb-2">Segmentation Preview</div>
+                      <div className="relative rounded-lg overflow-hidden border border-green-500/30 bg-black/50 w-fit max-w-full">
+                        <img
+                          src={processResult.visualization_url}
+                          alt="Brain tumor segmentation visualization"
+                          className="w-auto h-auto max-w-sm max-h-64 object-contain"
+                          onError={(e) => {
+                            // Fallback if image fails to load
+                            e.currentTarget.style.display = 'none'
+                            e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                          }}
+                        />
+                        <div className="hidden flex items-center justify-center w-80 h-64 text-green-300">
+                          <div className="text-center">
+                            <div className="text-lg">Visualization Unavailable</div>
+                            <div className="text-sm opacity-70">Please check the segmentation file</div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -526,7 +528,7 @@ export default function AnalysisPage() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
                   {/* Grade Field */}
                   <div>
-                    <div className="text-sm font-medium text-white/90 mb-3">Tumor Grade</div>
+                    <div className="text-sm font-medium text-white/90 mb-3">Tumdsdsor Grade</div>
                     <Select value={currentAssessment.grade ?? ""} onValueChange={(value) => updateCurrentAssessment({ grade: value })}>
                       <SelectTrigger className="bg-background/60 border-white/30 text-white/90">
                         <SelectValue placeholder="Select grade" />
@@ -680,20 +682,26 @@ export default function AnalysisPage() {
 
                   {/* Generate Final Verdict Button - Always visible when all completed */}
                   {allCompleted && (
-                    <div className="flex justify-center">
+                    <div className="flex justify-center mt-6">
                       <Button
                         size="lg"
                         disabled={isGeneratingVerdict}
                         onClick={handleGenerateVerdict}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8"
+                        className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-blue-800 hover:from-blue-700 hover:via-blue-800 hover:to-blue-900 text-white font-bold px-24 py-6 text-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border border-blue-500/30 hover:border-blue-400/50 ring-2 ring-blue-500/20 hover:ring-blue-400/30 ring-offset-2 ring-offset-background min-w-[320px]"
                       >
+                        {/* Subtle glow effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 via-blue-500/20 to-blue-600/20 rounded-md blur-sm -z-10"></div>
+
                         {isGeneratingVerdict ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generating Final Verdict...
+                            <Loader2 className="h-5 w-5 mr-3 animate-spin text-black" />
+                            <span className="tracking-wide text-black">Generating Final Verdict...</span>
                           </>
                         ) : (
-                          "Generate Final Verdict"
+                          <>
+                            <Brain className="h-5 w-5 mr-3 text-black" />
+                            <span className="tracking-wide text-black">Generate Final Verdict</span>
+                          </>
                         )}
                       </Button>
                     </div>
