@@ -547,14 +547,18 @@ class MultiFieldAnnotatorPredictor:
         Args:
             scan_id: The scan identifier (string)
             scan_index: The index of the scan in the consensus_labels array
-            output_path: Path to the JSON file. Defaults to backend/consensus_labels.json
+            output_path: Path to the JSON file. Defaults to public/data/{scan_id}/consensus_labels.json
         """
         import json
         import os
 
-        # Default to saving inside the backend package directory
+        # Default to saving next to the case data inside public/data/{scan_id}/
         if output_path is None:
-            output_path = os.path.join(os.path.dirname(__file__), "consensus_labels.json")
+            project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+            public_data_dir = os.path.join(project_root, "public", "data")
+            case_dir = os.path.join(public_data_dir, str(scan_id))
+            os.makedirs(case_dir, exist_ok=True)
+            output_path = os.path.join(case_dir, "consensus_labels.json")
 
         # Load existing data if file exists
         if os.path.exists(output_path):
