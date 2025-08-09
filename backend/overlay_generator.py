@@ -90,10 +90,13 @@ def create_overlay_image(flair_slice: np.ndarray, seg_slice: np.ndarray,
         rgb_image[tumor_mask, 1] = rgb_image[tumor_mask, 1] // 2  # Reduce green
         rgb_image[tumor_mask, 2] = rgb_image[tumor_mask, 2] // 2  # Reduce blue
     
-    # Convert to PIL Image and resize
+    # Convert to PIL Image and resize with high quality resampling
     pil_image = Image.fromarray(rgb_image.astype(np.uint8))
-    pil_image = pil_image.resize(size, Image.Resampling.LANCZOS)
-    
+
+    # Use high-quality resampling for medical images
+    if size != rgb_image.shape[:2]:
+        pil_image = pil_image.resize(size, Image.Resampling.LANCZOS)
+
     return pil_image
 
 
@@ -135,6 +138,62 @@ def generate_overlay_for_case(case_id: str, size: Tuple[int, int] = (96, 96)) ->
         return None
 
 
+def generate_nifti_preview(nifti_path: str, size: Tuple[int, int] = (128, 128)) -> Optional[Image.Image]:
+    """
+    Generate a grayscale preview image from a NIfTI file.
+
+    Args:
+        nifti_path: Path to the NIfTI file
+        size: Output image size (width, height)
+
+    Returns:
+        PIL Image with grayscale preview, or None if generation fails
+    """
+    try:
+        # Load the middle slice from the NIfTI file
+        slice_data = load_nifti_slice(nifti_path)
+        if slice_data is None:
+            logger.error(f"Failed to load NIfTI slice from {nifti_path}")
+            return None
+
+        # Normalize to 0-255 range
+        normalized_slice = normalize_image(slice_data)
+
+        # Convert to PIL Image (grayscale)
+        pil_image = Image.fromarray(normalized_slice, mode='L')
+
+        # Resize to requested size
+        pil_image = pil_image.resize(size, Image.Resampling.LANCZOS)
+
+        return pil_image
+
+    except Exception as e:
+        logger.error(f"Failed to generate NIfTI preview for {nifti_path}: {e}")
+        return None
+
+
+def get_nifti_preview_bytes(nifti_path: str, size: Tuple[int, int] = (128, 128)) -> Optional[bytes]:
+    """
+    Get NIfTI preview image as bytes for HTTP response.
+
+    Args:
+        nifti_path: Path to the NIfTI file
+        size: Image size
+
+    Returns:
+        Image bytes, or None if generation fails
+    """
+    preview_image = generate_nifti_preview(nifti_path, size)
+    if preview_image is None:
+        return None
+
+    # Convert to bytes with high quality PNG settings
+    img_buffer = io.BytesIO()
+    preview_image.save(img_buffer, format='PNG', optimize=False, compress_level=1)
+    img_buffer.seek(0)
+    return img_buffer.getvalue()
+
+
 def get_overlay_image_bytes(case_id: str, size: Tuple[int, int] = (96, 96)) -> Optional[bytes]:
     """
     Get overlay image as bytes for HTTP response.
@@ -150,8 +209,8 @@ def get_overlay_image_bytes(case_id: str, size: Tuple[int, int] = (96, 96)) -> O
     if overlay_image is None:
         return None
 
-    # Convert to bytes
+    # Convert to bytes with high quality PNG settings
     img_buffer = io.BytesIO()
-    overlay_image.save(img_buffer, format='PNG')
+    overlay_image.save(img_buffer, format='PNG', optimize=False, compress_level=1)
     img_buffer.seek(0)
     return img_buffer.getvalue()

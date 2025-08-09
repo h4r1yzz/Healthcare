@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Brain, Search, TrendingUp, X, ZoomIn } from "lucide-react"
+import { Brain, Search, TrendingUp, X, ZoomIn, MapPin, Layers } from "lucide-react"
 import { useState, useEffect } from "react"
 
 interface SimilarityMatch {
@@ -37,18 +37,172 @@ export default function SimilarityResults({ results }: SimilarityResultsProps) {
     return "bg-red-500/20 text-red-300 border-red-500/30"
   }
 
-  const formatMetadata = (metadata: Record<string, any>) => {
+  const formatMetadata = (metadata: Record<string, any>): [string, any][] => {
     const entries = Object.entries(metadata)
     if (entries.length === 0) return []
 
-    return entries.slice(0, 4) // Show up to 4 metadata fields for vertical display
+    // Define the three most clinically relevant fields in priority order
+    const clinicalFields = ['tumor_grade', 'tumor_location', 'tumor_type']
+
+    // Filter and return only the clinically relevant fields
+    const filteredEntries: [string, any][] = []
+
+    clinicalFields.forEach(field => {
+      // Try exact match first
+      const exactMatch = entries.find(([key]) => key.toLowerCase() === field)
+      if (exactMatch) {
+        filteredEntries.push(exactMatch)
+        return
+      }
+
+      // Try partial match (e.g., 'grade' for 'tumor_grade')
+      const fieldSuffix = field.replace('tumor_', '')
+      const partialMatch = entries.find(([key]) =>
+        key.toLowerCase().includes(fieldSuffix) ||
+        key.toLowerCase().replace(/[_\s]/g, '').includes(fieldSuffix)
+      )
+      if (partialMatch) {
+        filteredEntries.push(partialMatch)
+      }
+    })
+
+    return filteredEntries
+  }
+
+  // Color coding for metadata fields - all with neutral backgrounds, distinctive text colors
+  const getFieldColor = (key: string) => {
+    const normalizedKey = key.toLowerCase().replace(/[_\s]/g, '')
+
+    switch (normalizedKey) {
+      case 'tumorgrade':
+      case 'grade':
+        return {
+          key: 'text-white',
+          value: 'text-white/90',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+      case 'tumorlocation':
+      case 'location':
+        return {
+          key: 'text-blue-300',
+          value: 'text-blue-100',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+      case 'tumortype':
+      case 'type':
+        return {
+          key: 'text-purple-300',
+          value: 'text-purple-100',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+      case 'size':
+      case 'tumorsize':
+        return {
+          key: 'text-green-300',
+          value: 'text-green-100',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+      case 'confidence':
+      case 'score':
+        return {
+          key: 'text-yellow-300',
+          value: 'text-yellow-100',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+      default:
+        return {
+          key: 'text-cyan-300',
+          value: 'text-cyan-100',
+          bg: 'bg-white/5',
+          border: 'border-white/10'
+        }
+    }
+  }
+
+  // Enhanced value formatting with color coding for specific values (clinical fields only)
+  const getValueColor = (key: string, value: any) => {
+    const normalizedKey = key.toLowerCase().replace(/[_\s]/g, '')
+    const normalizedValue = String(value).toLowerCase()
+
+    // Special color coding for tumor grade values
+    if (normalizedKey === 'tumorgrade' || normalizedKey === 'grade') {
+      if (normalizedValue.includes('high') || normalizedValue.includes('iv') || normalizedValue === '4') {
+        return 'text-white font-semibold'
+      }
+      if (normalizedValue.includes('low') || normalizedValue.includes('i') || normalizedValue === '1') {
+        return 'text-white/80'
+      }
+      // Default white for grade
+      return 'text-white/90'
+    }
+
+    // Special highlighting for aggressive tumor types
+    if (normalizedKey === 'tumortype' || normalizedKey === 'type') {
+      if (normalizedValue.includes('glioblastoma') || normalizedValue.includes('gbm')) {
+        return 'text-red-200 font-semibold'
+      }
+      // Default purple for type
+      return 'text-purple-100'
+    }
+
+    // For location, always use blue
+    if (normalizedKey === 'tumorlocation' || normalizedKey === 'location') {
+      return 'text-blue-100'
+    }
+
+    // Default to field color
+    return getFieldColor(key).value
+  }
+
+  // Get explicit field label color (more specific than getFieldColor)
+  const getFieldLabelColor = (key: string) => {
+    const normalizedKey = key.toLowerCase().replace(/[_\s]/g, '')
+
+    switch (normalizedKey) {
+      case 'tumorgrade':
+      case 'grade':
+        return 'text-white'
+      case 'tumorlocation':
+      case 'location':
+        return 'text-blue-300'
+      case 'tumortype':
+      case 'type':
+        return 'text-purple-300'
+      default:
+        return 'text-cyan-300'
+    }
+  }
+
+  // Get icon for metadata field type (only for the three clinical fields)
+  const getFieldIcon = (key: string) => {
+    const normalizedKey = key.toLowerCase().replace(/[_\s]/g, '')
+
+    switch (normalizedKey) {
+      case 'tumorgrade':
+      case 'grade':
+        return <TrendingUp className="h-3 w-3" />
+      case 'tumorlocation':
+      case 'location':
+        return <MapPin className="h-3 w-3" />
+      case 'tumortype':
+      case 'type':
+        return <Layers className="h-3 w-3" />
+      default:
+        return <Brain className="h-3 w-3" />
+    }
   }
 
   const getImagePath = (caseId: string) => {
     // Extract the base case name from IDs like "BraTS20_Training_009_seg" or "BraTS20_Training_009"
     const baseName = caseId.replace('_seg', '')
     // Use overlay endpoint for FLAIR background + red segmentation overlay
-    return `/api/overlay/${baseName}?size=128`
+    // Increased size to 256 for better quality in similarity search results
+    return `/api/overlay/${baseName}?size=256`
   }
 
   const getFallbackImagePath = (caseId: string) => {
@@ -107,7 +261,35 @@ export default function SimilarityResults({ results }: SimilarityResultsProps) {
         <div className="text-sm text-blue-200/80 mb-4">
           Based on tumor segmentation pattern analysis using CLIP embeddings. Images show red segmentation overlays on FLAIR backgrounds.
         </div>
-        
+
+        {/* Color Legend for Clinical Metadata Fields */}
+        <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+          <div className="text-sm font-medium text-white/90 mb-3 flex items-center gap-2">
+            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+            Clinical Metadata Guide
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-xs">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-white/10 border border-white/20 rounded flex items-center justify-center">
+                <TrendingUp className="h-2 w-2 text-white" />
+              </div>
+              <span className="text-white">Tumor Grade</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-white/10 border border-white/20 rounded flex items-center justify-center">
+                <MapPin className="h-2 w-2 text-blue-300" />
+              </div>
+              <span className="text-blue-300">Tumor Location</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-white/10 border border-white/20 rounded flex items-center justify-center">
+                <Layers className="h-2 w-2 text-purple-300" />
+              </div>
+              <span className="text-purple-300">Tumor Type</span>
+            </div>
+          </div>
+        </div>
+
         {/* Horizontal layout for similar cases */}
         <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
           {results.map((match, index) => (
@@ -139,13 +321,13 @@ export default function SimilarityResults({ results }: SimilarityResultsProps) {
                 {/* Image */}
                 <div className="mb-4">
                   <div
-                    className="w-full h-48 rounded-lg overflow-hidden border border-white/20 bg-black/50 cursor-pointer hover:border-blue-400/50 transition-colors relative group"
+                    className="w-full aspect-square rounded-lg overflow-hidden border border-white/20 bg-black/50 cursor-pointer hover:border-blue-400/50 transition-colors relative group"
                     onClick={() => handleImageClick(match.case_name, `${match.case_name} overlay`)}
                   >
                     <img
                       src={getImagePath(match.case_name)}
                       alt={`${match.case_name} overlay`}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain medical-image"
                       onError={(e) => {
                         // Try fallback to segmentation mask only
                         const fallbackSrc = getFallbackImagePath(match.case_name)
@@ -170,24 +352,45 @@ export default function SimilarityResults({ results }: SimilarityResultsProps) {
                   </div>
                 </div>
 
-                {/* Case ID */}
-                <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="text-sm">
-                    <span className="font-medium text-blue-300">case_id:</span>
-                    <span className="text-white/80 ml-2">{match.id}</span>
-                  </div>
-                </div>
-
-                {/* Metadata - Vertical layout */}
+                {/* Metadata - Vertical layout with color coding */}
                 {Object.keys(match.metadata).length > 0 && (
-                  <div className="mb-4 p-3 bg-white/5 rounded-lg border border-white/10">
-                    <div className="space-y-2">
-                      {formatMetadata(match.metadata).map(([key, value], metaIndex) => (
-                        <div key={metaIndex} className="text-sm">
-                          <span className="font-medium text-blue-300">{key}:</span>
-                          <span className="text-white/80 ml-2">{value}</span>
-                        </div>
-                      ))}
+                  <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+                    <div className="space-y-3">
+                      {formatMetadata(match.metadata).map(([key, value], metaIndex) => {
+                        const fieldColors = getFieldColor(key)
+                        const fieldLabelColor = getFieldLabelColor(key)
+                        const valueColor = getValueColor(key, value)
+                        const isHighPriority = valueColor.includes('font-semibold')
+
+                        return (
+                          <div
+                            key={metaIndex}
+                            className={`metadata-card p-3 rounded-lg ${fieldColors.bg} ${fieldColors.border} border transition-all duration-300 hover:bg-opacity-40 hover:scale-[1.02] hover:shadow-lg ${isHighPriority ? 'ring-1 ring-white/20' : ''}`}
+                            style={{
+                              animationDelay: `${metaIndex * 100}ms`
+                            }}
+                          >
+                            <div className="flex flex-col space-y-2">
+                              <div className="flex items-center gap-2">
+                                <span className={`transition-transform duration-200 hover:scale-110 ${fieldLabelColor}`}>
+                                  {getFieldIcon(key)}
+                                </span>
+                                <span className={`font-semibold text-xs uppercase tracking-wide ${fieldLabelColor}`}>
+                                  {key.replace(/_/g, ' ')}
+                                </span>
+                                {isHighPriority && (
+                                  <div className="ml-auto">
+                                    <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                  </div>
+                                )}
+                              </div>
+                              <span className={`font-medium text-sm pl-5 transition-colors duration-200 ${valueColor}`}>
+                                {value}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -232,7 +435,7 @@ export default function SimilarityResults({ results }: SimilarityResultsProps) {
               <img
                 src={selectedImage.src}
                 alt={selectedImage.alt}
-                className="max-w-full max-h-[80vh] object-contain"
+                className="max-w-full max-h-[80vh] object-contain medical-image"
                 onClick={(e) => e.stopPropagation()}
                 onError={(e) => {
                   // Fallback to segmentation mask if overlay fails

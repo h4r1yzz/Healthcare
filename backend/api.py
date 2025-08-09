@@ -34,7 +34,7 @@ from backend.similarity_search import search_similar_cases, is_similarity_search
 from backend.multifieldannotator_predictor import MultiFieldAnnotatorPredictor
 
 # Import overlay generation functionality
-from backend.overlay_generator import get_overlay_image_bytes
+from backend.overlay_generator import get_overlay_image_bytes, get_nifti_preview_bytes
 
 
 PUBLIC_DATA_DIR = os.path.join(PROJECT_ROOT, "public", "data")
@@ -303,6 +303,65 @@ async def consensus(request: ConsensusRequest):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate consensus: {str(e)}")
+
+
+@app.post("/preview")
+async def generate_nifti_preview(file: UploadFile = File(...), size: int = 256):
+    """
+    Generate and serve a grayscale preview image from an uploaded NIfTI file.
+
+    Args:
+        file: Uploaded NIfTI file (.nii or .nii.gz)
+        size: Image size in pixels (default: 256x256)
+    """
+    try:
+        # Validate file extension
+        if not (file.filename.endswith('.nii') or file.filename.endswith('.nii.gz')):
+            raise HTTPException(status_code=400, detail="File must be a NIfTI file (.nii or .nii.gz)")
+
+        # Create temporary file to save upload
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.nii.gz' if file.filename.endswith('.nii.gz') else '.nii') as temp_file:
+            # Copy uploaded file to temporary location
+            shutil.copyfileobj(file.file, temp_file)
+            temp_path = temp_file.name
+
+        try:
+            # Generate preview image
+            image_bytes = get_nifti_preview_bytes(temp_path, (size, size))
+
+            if image_bytes is None:
+                raise HTTPException(status_code=400, detail="Failed to generate preview from NIfTI file")
+
+            # Return image with appropriate headers
+            from fastapi.responses import Response
+            return Response(
+                content=image_bytes,
+                media_type="image/png",
+                headers={
+                    "Content-Disposition": f"inline; filename=preview_{size}x{size}.png",
+                    "Cache-Control": "no-cache"  # Don't cache temporary previews
+                }
+            )
+
+        finally:
+            # Clean up temporary file
+            try:
+                os.unlink(temp_path)
+            except Exception:
+                pass
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating NIfTI preview: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate preview: {str(e)}")
+    finally:
+        # Ensure uploaded file is closed
+        try:
+            file.file.close()
+        except Exception:
+            pass
 
 
 @app.get("/overlay/{case_id}")
