@@ -2,6 +2,7 @@ import Navbar from "@/components/navbar"
 import Hero from "@/components/hero"
 import Features from "@/components/features"
 import VideoHero from "@/components/video-hero"
+import Team from "@/components/team"
 import CTA from "@/components/cta"
 import Footer from "@/components/footer"
 
@@ -22,6 +23,8 @@ export default function Home() {
         <VideoHero />
         <div className="h-px w-full bg-white/70" />
         <Features />
+        <div className="h-px w-full bg-white/70" />
+        <Team />
         <CTA />
         <Footer />
       </div>

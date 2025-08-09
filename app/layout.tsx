@@ -2,6 +2,7 @@ import "./globals.css"
 import type React from "react"
 import type { Metadata } from "next"
 import MouseMoveEffect from "@/components/mouse-move-effect"
+import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
   title: "NeuroGrade AI",
@@ -25,6 +26,7 @@ export default function RootLayout({
       <body className="text-foreground antialiased">
         <MouseMoveEffect />
         {children}
+        <Toaster />
       </body>
     </html>
   )
