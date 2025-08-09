@@ -59,3 +59,14 @@ public/data/
 backend/myenv
 backend/.ipynb
 *.ipynb
+
+
+backend/__pycache__/
+backend/myenv/
+backend/.ipynb
+*.ipynb
+
+
+backend/myenv
+backend/.ipynb
+*.ipynb
