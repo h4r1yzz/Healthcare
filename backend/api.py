@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from typing import List, Optional, Dict, Any
 
 # Ensure project root on sys.path for absolute imports when running from `backend/`
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -27,8 +28,8 @@ from backend.main import (
     assemble_full_volume,
 )
 
-# Import multi-field annotator predictor for consensus of radiologist assessments
-from backend.multifieldannotator_predictor import MultiFieldAnnotatorPredictor
+# Import similarity search functionality
+from backend.similarity_search import search_similar_cases, is_similarity_search_available
 
 
 PUBLIC_DATA_DIR = os.path.join(PROJECT_ROOT, "public", "data")
@@ -48,35 +49,22 @@ app.add_middleware(
 )
 
 
+class SimilarityMatch(BaseModel):
+    id: str
+    score: float
+    metadata: Dict[str, Any]
+    case_name: str
+
+
 class PredictResponse(BaseModel):
     case: str
     output_abs_path: str
     output_url: str
     visualization_url: str
-
-
-class RadiologistAssessment(BaseModel):
-    radiologist: str
-    tumor_location: Optional[str] = None
-    tumor_type: Optional[str] = None
-    tumor_grade: Optional[str] = None
-    size: Optional[str] = None
-    confidence: Optional[str] = None
-
-
-class ConsensusRequest(BaseModel):
-    scan_id: str
-    assessments: list[RadiologistAssessment]
-
-
-class ConsensusResponse(BaseModel):
-    scan_id: str
-    consensus: dict
-    saved_json_path: str
+    similarity_results: Optional[List[SimilarityMatch]] = None
 
 
 _model = None
-_consensus_predictor: Optional["MultiFieldAnnotatorPredictor"] = None
 
 
 def get_model():
@@ -86,20 +74,6 @@ def get_model():
             raise RuntimeError(f"Model not found at {MODEL_PATH}")
         _model = build_model(MODEL_PATH)
     return _model
-
-
-def get_consensus_predictor() -> "MultiFieldAnnotatorPredictor":
-    global _consensus_predictor
-    if _consensus_predictor is None:
-        # Save models inside the backend/tumor_models directory
-        models_dir = os.path.join(PROJECT_ROOT, "backend", "tumor_models")
-        os.makedirs(models_dir, exist_ok=True)
-        _consensus_predictor = MultiFieldAnnotatorPredictor(
-            verbose=False,
-            model_save_dir=models_dir,
-            auto_retrain_threshold=0.0,
-        )
-    return _consensus_predictor
 
 
 def convert_nifti_to_rgb_visualization(nifti_path: str, flair_path: str, output_path: str) -> None:
@@ -232,6 +206,32 @@ async def predict(
     flair_path = paths["flair"]  # Get the FLAIR file path
     convert_nifti_to_rgb_visualization(seg_path, flair_path, viz_path)
 
+    # Perform similarity search
+    similarity_results = None
+    try:
+        is_available, error_msg = is_similarity_search_available()
+        if is_available:
+            print("Performing similarity search...")
+            similar_cases = search_similar_cases(seg_path)
+            if similar_cases:
+                similarity_results = [
+                    SimilarityMatch(
+                        id=case['id'],
+                        score=case['score'],
+                        metadata=case['metadata'],
+                        case_name=case['case_name']
+                    )
+                    for case in similar_cases
+                ]
+                print(f"Found {len(similarity_results)} similar cases")
+            else:
+                print("No similar cases found")
+        else:
+            print(f"Similarity search not available: {error_msg}")
+    except Exception as e:
+        print(f"Similarity search failed: {e}")
+        # Continue without similarity results
+
     # Return paths for frontend; Next.js serves under /data
     rel_url = f"/data/{safe_case}/{os.path.basename(seg_path)}"
     viz_url = f"/data/{safe_case}/{os.path.basename(viz_path)}"
@@ -239,41 +239,8 @@ async def predict(
         case=safe_case,
         output_abs_path=seg_path,
         output_url=rel_url,
-        visualization_url=viz_url
-    )
-
-
-@app.post("/consensus", response_model=ConsensusResponse)
-async def consensus(request: ConsensusRequest):
-    """Compute consensus tumor metadata from three radiologist assessments for a scan."""
-    if not request.assessments or len(request.assessments) < 3:
-        raise HTTPException(status_code=400, detail="At least 3 assessments are required")
-
-    predictor = get_consensus_predictor()
-
-    # Build scan_data structure expected by MultiFieldAnnotatorPredictor.add_new_scan
-    scan_data = {request.scan_id: {}}
-    for a in request.assessments:
-        scan_data[request.scan_id][a.radiologist] = {
-            "Tumor Location": a.tumor_location or "",
-            "Tumor Type": a.tumor_type or "",
-            "Tumor Grade": a.tumor_grade or "",
-            "Size": a.size or "",
-            "Confidence": a.confidence or "",
-        }
-
-    update_info = predictor.add_new_scan(scan_data=scan_data)
-
-    # Resolve saved JSON absolute path
-    saved_json_path = os.path.join(PROJECT_ROOT, "backend", "consensus_labels.json")
-
-    # Extract consensus for this scan
-    consensus_map = update_info.get("consensus_labels", {}).get(request.scan_id, {})
-
-    return ConsensusResponse(
-        scan_id=request.scan_id,
-        consensus=consensus_map,
-        saved_json_path=saved_json_path,
+        visualization_url=viz_url,
+        similarity_results=similarity_results
     )
 
 

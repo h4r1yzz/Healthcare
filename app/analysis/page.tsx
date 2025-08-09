@@ -2,6 +2,7 @@
 
 import Navbar from "@/components/navbar"
 import UploadPanel from "@/components/analysis/upload-panel"
+import SimilarityResults from "@/components/analysis/similarity-results"
 import { useMemo, useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, CheckCircle, Clock } from "lucide-react"
@@ -13,11 +14,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
+interface SimilarityMatch {
+  id: string
+  score: number
+  metadata: Record<string, any>
+  case_name: string
+}
+
 interface ProcessResult {
   case: string
   output_abs_path: string
   output_url: string
   visualization_url: string
+  similarity_results?: SimilarityMatch[]
 }
 
 type RadiologistAssessment = {
@@ -80,16 +89,6 @@ const loadAssessmentFromStorage = (radiologistId: string): SavedAssessment | nul
   }
 }
 
-const clearAllAssessments = (): void => {
-  try {
-    radiologists.forEach(radiologist => {
-      localStorage.removeItem(`${STORAGE_PREFIX}${radiologist.id}`)
-    })
-  } catch (error) {
-    console.error("Failed to clear assessments from localStorage:", error)
-  }
-}
-
 
 
 export default function AnalysisPage() {
@@ -102,10 +101,6 @@ export default function AnalysisPage() {
   const [completionStatus, setCompletionStatus] = useState<Record<string, boolean>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
-
-  const [isGeneratingVerdict, setIsGeneratingVerdict] = useState(false)
-  const [verdictError, setVerdictError] = useState<string | null>(null)
-  const [consensus, setConsensus] = useState<Record<string, string | null> | null>(null)
 
   const gradeOptions = useMemo(() => ["I", "II", "III", "IV", "Unknown"], [])
   const locationOptions = useMemo(() => ["Frontal", "Parietal", "Temporal", "Occipital", "Cerebellum", "Brainstem"], [])
@@ -180,87 +175,6 @@ export default function AnalysisPage() {
     }))
   }
 
-  const completedCount = Object.values(completionStatus).filter(Boolean).length
-  const allCompleted = completedCount === radiologists.length
-
-  // Function to manually clear all assessments
-  const handleClearAllAssessments = () => {
-    clearAllAssessments()
-    setAssessments({})
-    setCompletionStatus({})
-    setConsensus(null)
-    setVerdictError(null)
-    toast({
-      title: "Assessments Cleared",
-      description: "All radiologist assessments have been cleared.",
-      variant: "default"
-    })
-  }
-
-  type ConsensusResponse = {
-    scan_id: string
-    consensus: Record<string, string | null>
-    saved_json_path: string
-  }
-
-  const normalizeTumorType = (value: string | null): string => {
-    if (!value) return ""
-    if (value === "Pituitary adenoma") return "Pituitary Adenoma"
-    return value
-  }
-
-  const handleGenerateVerdict = async () => {
-    if (!allCompleted) return
-    setIsGeneratingVerdict(true)
-    setVerdictError(null)
-    setConsensus(null)
-
-    const scanId = processResult?.case || `SCAN_${Date.now()}`
-
-    const body = {
-      scan_id: scanId,
-      assessments: radiologists.map((r) => {
-        const a = assessments[r.id] || {
-          grade: null,
-          location: null,
-          tumorType: null,
-          tumorSize: null,
-          comments: "",
-          confidence: 70,
-        }
-        return {
-          radiologist: r.name,
-          tumor_location: a.location || "",
-          tumor_type: normalizeTumorType(a.tumorType),
-          tumor_grade: a.grade || "",
-          size: a.tumorSize || "",
-          confidence: `${Math.round(a.confidence)}%`,
-        }
-      }),
-    }
-
-    try {
-      const res = await fetch('/api/consensus', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}))
-        throw new Error(errJson.error || `HTTP ${res.status}`)
-      }
-      const json: ConsensusResponse = await res.json()
-      setConsensus(json.consensus)
-      toast({ title: 'Final Verdict Generated', description: `Saved to ${json.saved_json_path}`, variant: 'default' })
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to generate verdict'
-      setVerdictError(msg)
-      toast({ title: 'Verdict Generation Failed', description: msg, variant: 'destructive' })
-    } finally {
-      setIsGeneratingVerdict(false)
-    }
-  }
-
   // Submit assessment function
   const handleSubmitAssessment = async () => {
     const currentAssessment = getCurrentAssessment()
@@ -308,13 +222,6 @@ export default function AnalysisPage() {
       setError("All 4 MRI sequences are required")
       return
     }
-
-    // Clear previous assessments when starting new processing
-    clearAllAssessments()
-    setAssessments({})
-    setCompletionStatus({})
-    setConsensus(null)
-    setVerdictError(null)
 
     setIsProcessing(true)
     setDoneProcessing(false)
@@ -466,21 +373,18 @@ export default function AnalysisPage() {
             </Card>
           )}
 
+          {/* Similarity search results */}
+          {doneProcessing && processResult?.similarity_results && (
+            <SimilarityResults results={processResult.similarity_results} />
+          )}
+
           {/* Radiologist assessment */}
           {doneProcessing && (
             <Card className="border-white/30 bg-background/70">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="text-2xl font-semibold tracking-wide text-white/90">Radiologist Assessment</div>
-                  <div className="flex items-center gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClearAllAssessments}
-                      className="border-red-500/50 text-red-400 hover:bg-red-500/10"
-                    >
-                      Clear All
-                    </Button>
+                  <div className="flex items-center gap-2">
                     <span className="text-sm text-white/70">Radiologist:</span>
                     <Select value={currentRadiologist} onValueChange={setCurrentRadiologist}>
                       <SelectTrigger className="w-[220px] bg-background/60 border-white/30 text-white/90">
@@ -613,106 +517,55 @@ export default function AnalysisPage() {
                   </div>
                 </div>
 
-                {/* Submit + Generate Verdict Row */}
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 flex-wrap">
-                    <Button
-                      size="lg"
-                      disabled={
-                        !currentAssessment.grade ||
-                        !currentAssessment.location ||
-                        !currentAssessment.tumorType ||
-                        !currentAssessment.tumorSize ||
-                        isSubmitting
-                      }
-                      onClick={handleSubmitAssessment}
-                      className={isCurrentAssessmentComplete ? "bg-green-600 hover:bg-green-700" : ""}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Submitting...
-                        </>
-                      ) : isCurrentAssessmentComplete ? (
-                        <>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Resubmit Assessment
-                        </>
-                      ) : (
-                        "Submit Assessment"
-                      )}
-                    </Button>
+                {/* Submit Button */}
+                <div className="flex items-center gap-4">
+                  <Button
+                    size="lg"
+                    disabled={
+                      !currentAssessment.grade ||
+                      !currentAssessment.location ||
+                      !currentAssessment.tumorType ||
+                      !currentAssessment.tumorSize ||
+                      isSubmitting
+                    }
+                    onClick={handleSubmitAssessment}
+                    className={isCurrentAssessmentComplete ? "bg-green-600 hover:bg-green-700" : ""}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : isCurrentAssessmentComplete ? (
+                      <>
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        Resubmit Assessment
+                      </>
+                    ) : (
+                      "Submit Assessment"
+                    )}
+                  </Button>
 
-                    {/* Assessment Status Summary */}
-                    <div className="flex items-center gap-2 text-sm text-white/70">
-                      <span>Progress:</span>
-                      <div className="flex items-center gap-1">
-                        {radiologists.map((radiologist) => (
-                          <div key={radiologist.id} className="flex items-center gap-1">
-                            {completionStatus[radiologist.id] ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Clock className="h-4 w-4 text-yellow-500" />
-                            )}
-                            <span className="text-xs">{radiologist.name.split(' ')[1]}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <span className="text-xs">
-                        ({Object.values(completionStatus).filter(Boolean).length}/{radiologists.length} completed)
-                      </span>
+                  {/* Assessment Status Summary */}
+                  <div className="flex items-center gap-2 text-sm text-white/70">
+                    <span>Progress:</span>
+                    <div className="flex items-center gap-1">
+                      {radiologists.map((radiologist) => (
+                        <div key={radiologist.id} className="flex items-center gap-1">
+                          {completionStatus[radiologist.id] ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Clock className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <span className="text-xs">{radiologist.name.split(' ')[1]}</span>
+                        </div>
+                      ))}
                     </div>
+                    <span className="text-xs">
+                      ({Object.values(completionStatus).filter(Boolean).length}/{radiologists.length} completed)
+                    </span>
                   </div>
-
-                  {/* Generate Final Verdict Button - Always visible when all completed */}
-                  {allCompleted && (
-                    <div className="flex justify-center">
-                      <Button
-                        size="lg"
-                        disabled={isGeneratingVerdict}
-                        onClick={handleGenerateVerdict}
-                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8"
-                      >
-                        {isGeneratingVerdict ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Generating Final Verdict...
-                          </>
-                        ) : (
-                          "Generate Final Verdict"
-                        )}
-                      </Button>
-                    </div>
-                  )}
                 </div>
-
-                {verdictError && (
-                  <div className="mt-2 text-sm text-red-400">{verdictError}</div>
-                )}
-
-                {/* Final Verdict Display */}
-                {consensus && (
-                  <div className="mt-6 rounded-md border border-white/20 bg-background/60 p-4">
-                    <div className="text-lg font-semibold text-white/90 mb-4">Final Verdict</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Tumor Location:</span> {consensus["Tumor Location"] ?? "—"}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Tumor Type:</span> {consensus["Tumor Type"] ?? "—"}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Tumor Grade:</span> {consensus["Tumor Grade"] ?? "—"}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Size:</span> {consensus["Size"] ?? "—"}
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Confidence:</span> {consensus["Confidence"] ?? "—"}
-                      </div>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
