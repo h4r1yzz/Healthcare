@@ -416,10 +416,10 @@ export default function AnalysisPage() {
           {doneProcessing && processResult && (
             <Card className="border-green-500/30 bg-green-950/20">
               <CardContent className="p-6">
-                <div className="text-2xl font-semibold tracking-wide text-green-400 mb-6">Processing Complete</div>
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
                   {/* Left column: Results info */}
                   <div className="space-y-4">
+                  <div className="text-2xl font-semibold text-green-400 mb-6">Processing Complete</div>
                     <div>
                       <div className="text-green-300 font-medium">Case ID:</div>
                       <div className="text-green-200">{processResult.case}</div>
@@ -528,7 +528,7 @@ export default function AnalysisPage() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
                   {/* Grade Field */}
                   <div>
-                    <div className="text-sm font-medium text-white/90 mb-3">Tumor Grade</div>
+                    <div className="text-sm font-medium text-white/90 mb-3">Tumdsdsor Grade</div>
                     <Select value={currentAssessment.grade ?? ""} onValueChange={(value) => updateCurrentAssessment({ grade: value })}>
                       <SelectTrigger className="bg-background/60 border-white/30 text-white/90">
                         <SelectValue placeholder="Select grade" />
