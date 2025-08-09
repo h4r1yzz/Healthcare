@@ -27,6 +27,9 @@ from backend.main import (
     assemble_full_volume,
 )
 
+# Import multi-field annotator predictor for consensus of radiologist assessments
+from backend.multifieldannotator_predictor import MultiFieldAnnotatorPredictor
+
 
 PUBLIC_DATA_DIR = os.path.join(PROJECT_ROOT, "public", "data")
 MODEL_PATH = os.path.join(PROJECT_ROOT, "backend", "model", "brain_tumor_unet_final.h5")
@@ -52,7 +55,28 @@ class PredictResponse(BaseModel):
     visualization_url: str
 
 
+class RadiologistAssessment(BaseModel):
+    radiologist: str
+    tumor_location: Optional[str] = None
+    tumor_type: Optional[str] = None
+    tumor_grade: Optional[str] = None
+    size: Optional[str] = None
+    confidence: Optional[str] = None
+
+
+class ConsensusRequest(BaseModel):
+    scan_id: str
+    assessments: list[RadiologistAssessment]
+
+
+class ConsensusResponse(BaseModel):
+    scan_id: str
+    consensus: dict
+    saved_json_path: str
+
+
 _model = None
+_consensus_predictor: Optional["MultiFieldAnnotatorPredictor"] = None
 
 
 def get_model():
@@ -62,6 +86,20 @@ def get_model():
             raise RuntimeError(f"Model not found at {MODEL_PATH}")
         _model = build_model(MODEL_PATH)
     return _model
+
+
+def get_consensus_predictor() -> "MultiFieldAnnotatorPredictor":
+    global _consensus_predictor
+    if _consensus_predictor is None:
+        # Save models inside the backend/tumor_models directory
+        models_dir = os.path.join(PROJECT_ROOT, "backend", "tumor_models")
+        os.makedirs(models_dir, exist_ok=True)
+        _consensus_predictor = MultiFieldAnnotatorPredictor(
+            verbose=False,
+            model_save_dir=models_dir,
+            auto_retrain_threshold=0.0,
+        )
+    return _consensus_predictor
 
 
 def convert_nifti_to_rgb_visualization(nifti_path: str, flair_path: str, output_path: str) -> None:
@@ -202,6 +240,40 @@ async def predict(
         output_abs_path=seg_path,
         output_url=rel_url,
         visualization_url=viz_url
+    )
+
+
+@app.post("/consensus", response_model=ConsensusResponse)
+async def consensus(request: ConsensusRequest):
+    """Compute consensus tumor metadata from three radiologist assessments for a scan."""
+    if not request.assessments or len(request.assessments) < 3:
+        raise HTTPException(status_code=400, detail="At least 3 assessments are required")
+
+    predictor = get_consensus_predictor()
+
+    # Build scan_data structure expected by MultiFieldAnnotatorPredictor.add_new_scan
+    scan_data = {request.scan_id: {}}
+    for a in request.assessments:
+        scan_data[request.scan_id][a.radiologist] = {
+            "Tumor Location": a.tumor_location or "",
+            "Tumor Type": a.tumor_type or "",
+            "Tumor Grade": a.tumor_grade or "",
+            "Size": a.size or "",
+            "Confidence": a.confidence or "",
+        }
+
+    update_info = predictor.add_new_scan(scan_data=scan_data)
+
+    # Resolve saved JSON absolute path
+    saved_json_path = os.path.join(PROJECT_ROOT, "backend", "consensus_labels.json")
+
+    # Extract consensus for this scan
+    consensus_map = update_info.get("consensus_labels", {}).get(request.scan_id, {})
+
+    return ConsensusResponse(
+        scan_id=request.scan_id,
+        consensus=consensus_map,
+        saved_json_path=saved_json_path,
     )
 
 
