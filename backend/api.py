@@ -6,6 +6,8 @@ from typing import Optional, Tuple
 
 import numpy as np
 import nibabel as nib
+import matplotlib.pyplot as plt
+from PIL import Image, ImageDraw
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,6 +49,7 @@ class PredictResponse(BaseModel):
     case: str
     output_abs_path: str
     output_url: str
+    visualization_url: str
 
 
 _model = None
@@ -59,6 +62,56 @@ def get_model():
             raise RuntimeError(f"Model not found at {MODEL_PATH}")
         _model = build_model(MODEL_PATH)
     return _model
+
+
+def convert_nifti_to_rgb_visualization(nifti_path: str, flair_path: str, output_path: str) -> None:
+    """
+    Convert a NIfTI segmentation file to an RGB visualization image overlaid on FLAIR.
+
+    Args:
+        nifti_path: Path to the input NIfTI segmentation file
+        flair_path: Path to the FLAIR NIfTI file for background
+        output_path: Path where the RGB visualization PNG will be saved
+    """
+    try:
+        # Load the segmentation and FLAIR images
+        seg_img = nib.load(nifti_path)
+        seg_data = seg_img.get_fdata()
+
+        flair_img = nib.load(flair_path)
+        flair_data = flair_img.get_fdata()
+
+        # Extract middle axial slice
+        z_idx = seg_data.shape[2] // 2
+        slice_seg = seg_data[:, :, z_idx]
+        slice_flair = flair_data[:, :, z_idx]
+
+        # Normalize FLAIR slice to 0-255 range
+        slice_flair_norm = (slice_flair - slice_flair.min()) / (np.ptp(slice_flair)) * 255
+        base_img = Image.fromarray(slice_flair_norm.astype(np.uint8)).convert("RGB")
+
+        # Create segmentation overlay (in red with transparency)
+        overlay = Image.new("RGBA", base_img.size)
+        overlay_data = overlay.load()
+        for y in range(slice_seg.shape[0]):
+            for x in range(slice_seg.shape[1]):
+                if slice_seg[y, x] > 0:
+                    overlay_data[x, y] = (255, 0, 0, 120)  # Red with transparency
+
+        # Merge base FLAIR and segmentation overlay
+        combined_img = Image.alpha_composite(base_img.convert("RGBA"), overlay)
+
+        # Save the combined image (clean visualization without annotations)
+        combined_img.convert("RGB").save(output_path, "PNG")
+
+    except Exception as e:
+        # If visualization fails, create a simple error image
+        error_img = Image.new("RGB", (512, 512), color=(0, 0, 0))
+        draw = ImageDraw.Draw(error_img)
+        draw.text((256, 256), 'Visualization\nUnavailable',
+                 fill=(255, 255, 255), anchor="mm")
+        error_img.save(output_path, "PNG")
+        print(f"Warning: Failed to generate visualization: {e}")
 
 
 @app.get("/health")
@@ -136,9 +189,20 @@ async def predict(
     seg_path = os.path.join(case_dir, f"{safe_case}_seg.nii")
     nib.save(nib.Nifti1Image(seg_volume.astype(np.int16), affine, header), seg_path)
 
-    # Return path for frontend; Next.js serves under /data
+    # Generate RGB visualization with FLAIR overlay
+    viz_path = os.path.join(case_dir, f"{safe_case}_seg_visualization.png")
+    flair_path = paths["flair"]  # Get the FLAIR file path
+    convert_nifti_to_rgb_visualization(seg_path, flair_path, viz_path)
+
+    # Return paths for frontend; Next.js serves under /data
     rel_url = f"/data/{safe_case}/{os.path.basename(seg_path)}"
-    return PredictResponse(case=safe_case, output_abs_path=seg_path, output_url=rel_url)
+    viz_url = f"/data/{safe_case}/{os.path.basename(viz_path)}"
+    return PredictResponse(
+        case=safe_case,
+        output_abs_path=seg_path,
+        output_url=rel_url,
+        visualization_url=viz_url
+    )
 
 
 # Entrypoint hint: uvicorn backend.api:app --host 0.0.0.0 --port 8000

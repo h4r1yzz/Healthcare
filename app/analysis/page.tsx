@@ -17,6 +17,7 @@ interface ProcessResult {
   case: string
   output_abs_path: string
   output_url: string
+  visualization_url: string
 }
 
 type RadiologistAssessment = {
@@ -305,25 +306,57 @@ export default function AnalysisPage() {
             <Card className="border-green-500/30 bg-green-950/20">
               <CardContent className="p-6">
                 <div className="text-2xl font-semibold tracking-wide text-green-400 mb-6">Processing Complete</div>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-green-300 font-medium">Case ID:</div>
-                    <div className="text-green-200">{processResult.case}</div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                  {/* Left column: Results info */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-green-300 font-medium">Case ID:</div>
+                      <div className="text-green-200">{processResult.case}</div>
+                    </div>
+                    <div>
+                      <div className="text-green-300 font-medium">Segmentation File:</div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            // Direct download from public folder
+                            window.open(processResult.output_url, '_blank')
+                          }}
+                          className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                        >
+                          Download Segmentation (.nii)
+                        </Button>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-green-300 font-medium">Visualization:</div>
+                      <div className="text-green-200 text-sm mt-1">
+                        Middle axial slice showing tumor regions in red
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-green-300 font-medium">Segmentation File:</div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => {
-                          // Direct download from public folder
-                          window.open(processResult.output_url, '_blank')
+
+                  {/* Right column: Visualization */}
+                  <div className="flex flex-col">
+                    <div className="text-green-300 font-medium mb-2">Segmentation Preview</div>
+                    <div className="relative rounded-lg overflow-hidden border border-green-500/30 bg-black/50 self-start">
+                      <img
+                        src={processResult.visualization_url}
+                        alt="Brain tumor segmentation visualization"
+                        className="w-full h-auto max-h-80 min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] object-contain"
+                        onError={(e) => {
+                          // Fallback if image fails to load
+                          e.currentTarget.style.display = 'none'
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden')
                         }}
-                        className="border-green-500/50 text-green-400 hover:bg-green-500/10"
-                      >
-                        Download Segmentation (.nii)
-                      </Button>
+                      />
+                      <div className="hidden flex items-center justify-center h-80 min-h-[280px] sm:min-h-[320px] lg:min-h-[300px] text-green-300">
+                        <div className="text-center">
+                          <div className="text-lg">Visualization Unavailable</div>
+                          <div className="text-sm opacity-70">Please check the segmentation file</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
