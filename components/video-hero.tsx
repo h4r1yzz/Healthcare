@@ -19,7 +19,7 @@ export default function VideoHero() {
       </div>
 
       {/* Content pinned near bottom */}
-      <div className="relative z-10 mx-auto max-w-5xl">
+      <div className="relative z-10 mx-auto max-w-6xl">
         <div className="space-y-2 sm:space-y-3 md:space-y-4">
           <p className="text-center text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold text-white">
             We design pioneering tools that

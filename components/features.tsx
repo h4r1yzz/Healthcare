@@ -26,13 +26,13 @@ const features = [
 export default function Features() {
   return (
     <section className="container space-y-16 py-24 md:py-32">
-      <div className="mx-auto max-w-[58rem] text-center">
+      <div className="mx-auto max-w-4xl text-center">
         <h2 className="font-bold text-3xl leading-[1.1] sm:text-3xl md:text-5xl">Cutting-Edge Solutions</h2>
         <p className="mt-4 text-muted-foreground sm:text-lg">
           Discover how MedScan can transform your business with our innovative technologies.
         </p>
       </div>
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2">
         {features.map((feature) => (
           <div key={feature.name} className="relative overflow-hidden rounded-lg border bg-background p-8">
             <div className="flex items-center gap-4">
