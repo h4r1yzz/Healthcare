@@ -13,6 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 
+interface ProcessResult {
+  case: string
+  output_abs_path: string
+  output_url: string
+}
+
 type RadiologistAssessment = {
   grade: string | null
   location: string | null
@@ -78,6 +84,8 @@ const loadAssessmentFromStorage = (radiologistId: string): SavedAssessment | nul
 export default function AnalysisPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [doneProcessing, setDoneProcessing] = useState(false)
+  const [processResult, setProcessResult] = useState<ProcessResult | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const [currentRadiologist, setCurrentRadiologist] = useState<string>("chen")
   const [assessments, setAssessments] = useState<Record<string, RadiologistAssessment>>({})
   const [completionStatus, setCompletionStatus] = useState<Record<string, boolean>>({})
@@ -199,14 +207,46 @@ export default function AnalysisPage() {
   const currentAssessment = getCurrentAssessment()
   const isCurrentAssessmentComplete = completionStatus[currentRadiologist] || false
 
-  function onStartProcessing() {
+  async function onStartProcessing(files: Partial<Record<"t1" | "t2" | "flair" | "t1ce", File>>) {
+    if (!files.t1 || !files.t2 || !files.flair || !files.t1ce) {
+      setError("All 4 MRI sequences are required")
+      return
+    }
+
     setIsProcessing(true)
     setDoneProcessing(false)
-    // Simulate async processing (e.g., hitting API) ~2s
-    setTimeout(() => {
-      setIsProcessing(false)
+    setError(null)
+    setProcessResult(null)
+
+    try {
+      // Create FormData for multipart upload
+      const formData = new FormData()
+      formData.append('t1', files.t1)
+      formData.append('t2', files.t2)
+      formData.append('flair', files.flair)
+      formData.append('t1ce', files.t1ce)
+      formData.append('case', `CASE_${Date.now()}`)
+
+      // Call Next.js API route which forwards to FastAPI backend
+      const response = await fetch('/api/prediction', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }))
+        throw new Error(errorData.detail || `HTTP ${response.status}`)
+      }
+
+      const result: ProcessResult = await response.json()
+      setProcessResult(result)
       setDoneProcessing(true)
-    }, 2000)
+    } catch (err) {
+      console.error('Processing error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to process sequences')
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
   return (
@@ -220,7 +260,17 @@ export default function AnalysisPage() {
       <div className="relative z-10">
         <Navbar />
         <main className="container max-w-screen-2xl py-8 md:py-12 space-y-8">
-          <UploadPanel onProcess={() => onStartProcessing()} />
+          <UploadPanel onProcess={onStartProcessing} isProcessing={isProcessing} />
+
+          {/* Error handling */}
+          {error && (
+            <Card className="border-red-500/30 bg-red-950/20">
+              <CardContent className="p-6">
+                <div className="text-red-400 font-medium">Processing Error</div>
+                <div className="text-red-300 mt-2">{error}</div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Processing pipeline */}
           {isProcessing && (
@@ -245,6 +295,37 @@ export default function AnalysisPage() {
                   <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
                   <div className="mt-4 text-white/90">Processing multi-modal sequences…</div>
                   <div className="text-sm text-muted-foreground mt-2">This may take up to 2 minutes</div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Processing Results */}
+          {doneProcessing && processResult && (
+            <Card className="border-green-500/30 bg-green-950/20">
+              <CardContent className="p-6">
+                <div className="text-2xl font-semibold tracking-wide text-green-400 mb-6">Processing Complete</div>
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-green-300 font-medium">Case ID:</div>
+                    <div className="text-green-200">{processResult.case}</div>
+                  </div>
+                  <div>
+                    <div className="text-green-300 font-medium">Segmentation File:</div>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          // Direct download from public folder
+                          window.open(processResult.output_url, '_blank')
+                        }}
+                        className="border-green-500/50 text-green-400 hover:bg-green-500/10"
+                      >
+                        Download Segmentation (.nii)
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

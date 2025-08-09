@@ -9,9 +9,10 @@ import { Info } from "lucide-react"
 
 type Props = {
   onProcess?: (files: Partial<Record<"t1" | "t2" | "flair" | "t1ce", File>>) => void
+  isProcessing?: boolean
 }
 
-export default function UploadPanel({ onProcess }: Props) {
+export default function UploadPanel({ onProcess, isProcessing = false }: Props) {
   const [t1, setT1] = React.useState<File | null>(null)
   const [t2, setT2] = React.useState<File | null>(null)
   const [flair, setFlair] = React.useState<File | null>(null)
@@ -30,10 +31,10 @@ export default function UploadPanel({ onProcess }: Props) {
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          <SequenceDropzone label="T1 Sequence" onFileSelected={setT1} />
-          <SequenceDropzone label="T2 Sequence" onFileSelected={setT2} />
-          <SequenceDropzone label="FLAIR Sequence" onFileSelected={setFlair} />
-          <SequenceDropzone label="T1ce Sequence" onFileSelected={setT1ce} />
+          <SequenceDropzone label="T1 Sequence" accept=".nii,.nii.gz" onFileSelected={setT1} />
+          <SequenceDropzone label="T2 Sequence" accept=".nii,.nii.gz" onFileSelected={setT2} />
+          <SequenceDropzone label="FLAIR Sequence" accept=".nii,.nii.gz" onFileSelected={setFlair} />
+          <SequenceDropzone label="T1ce Sequence" accept=".nii,.nii.gz" onFileSelected={setT1ce} />
         </div>
 
         <div className="mt-6 flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
@@ -44,8 +45,8 @@ export default function UploadPanel({ onProcess }: Props) {
             </AlertDescription>
           </Alert>
 
-          <Button size="lg" disabled={!allProvided} onClick={handleProcess} className="md:ml-auto md:min-w-[260px]">
-            Process Sequences
+          <Button size="lg" disabled={!allProvided || isProcessing} onClick={handleProcess} className="md:ml-auto md:min-w-[260px]">
+            {isProcessing ? "Processing..." : "Process Sequences"}
           </Button>
         </div>
       </CardContent>
