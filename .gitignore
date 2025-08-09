@@ -55,3 +55,7 @@ public/data/
 .pnp.*
 .pnpm-store/
 
+
+backend/myenv
+backend/.ipynb
+*.ipynb
