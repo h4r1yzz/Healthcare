@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { case_id: string } }
+  { params }: { params: Promise<{ case_id: string }> }
 ) {
   try {
-    const { case_id } = params
+    const { case_id } = await params
     const { searchParams } = new URL(request.url)
     const size = searchParams.get('size') || '96'
     
