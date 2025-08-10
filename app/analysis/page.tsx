@@ -5,7 +5,7 @@ import UploadPanel from "@/components/analysis/upload-panel"
 import SimilarityResults from "@/components/analysis/similarity-results"
 import { useMemo, useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, CheckCircle, Clock, Brain } from "lucide-react"
+import { Loader2, CheckCircle, Clock, Brain, FileText } from "lucide-react"
 
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
@@ -116,6 +116,11 @@ export default function AnalysisPage() {
   const [verdictError, setVerdictError] = useState<string | null>(null)
   const [consensus, setConsensus] = useState<Record<string, string | null> | null>(null)
 
+  // Report generation state
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false)
+  const [reportError, setReportError] = useState<string | null>(null)
+  const [reportUrl, setReportUrl] = useState<string | null>(null)
+
   const gradeOptions = useMemo(() => ["I", "II", "III", "IV", "Unknown"], [])
   const locationOptions = useMemo(() => ["Frontal", "Parietal", "Temporal", "Occipital", "Cerebellum", "Brainstem"], [])
   const tumorTypeOptions = useMemo(() => ["Glioma", "Meningioma", "Metastasis", "Pituitary adenoma", "Other"], [])
@@ -199,6 +204,8 @@ export default function AnalysisPage() {
     setCompletionStatus({})
     setConsensus(null)
     setVerdictError(null)
+    setReportUrl(null)
+    setReportError(null)
     toast({
       title: "Assessments Cleared",
       description: "All radiologist assessments have been cleared.",
@@ -210,6 +217,12 @@ export default function AnalysisPage() {
     scan_id: string
     consensus: Record<string, string | null>
     saved_json_path: string
+  }
+
+  type ReportResponse = {
+    report_path: string
+    download_url: string
+    filename: string
   }
 
   const normalizeTumorType = (value: string | null): string => {
@@ -244,6 +257,7 @@ export default function AnalysisPage() {
           tumor_grade: a.grade || "",
           size: a.tumorSize || "",
           confidence: `${Math.round(a.confidence)}%`,
+          comments: a.comments || "",
         }
       }),
     }
@@ -267,6 +281,60 @@ export default function AnalysisPage() {
       toast({ title: 'Verdict Generation Failed', description: msg, variant: 'destructive' })
     } finally {
       setIsGeneratingVerdict(false)
+    }
+  }
+
+  const handleGenerateReport = async () => {
+    if (!consensus || !processResult?.case) {
+      toast({
+        title: "Cannot Generate Report",
+        description: "Please generate consensus first.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setIsGeneratingReport(true)
+    setReportError(null)
+
+    try {
+      const res = await fetch('/api/generate-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scan_id: processResult.case
+        }),
+      })
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}))
+        throw new Error(errJson.error || `HTTP ${res.status}`)
+      }
+
+      const json: ReportResponse = await res.json()
+      setReportUrl(json.download_url)
+
+      // Automatically trigger download
+      const link = document.createElement('a')
+      link.href = json.download_url
+      link.download = json.filename
+      link.click()
+
+      toast({
+        title: 'Medical Report Generated',
+        description: `PDF report "${json.filename}" has been generated and downloaded.`,
+        variant: 'default'
+      })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to generate report'
+      setReportError(msg)
+      toast({
+        title: 'Report Generation Failed',
+        description: msg,
+        variant: 'destructive'
+      })
+    } finally {
+      setIsGeneratingReport(false)
     }
   }
 
@@ -528,7 +596,7 @@ export default function AnalysisPage() {
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
                   {/* Grade Field */}
                   <div>
-                    <div className="text-sm font-medium text-white/90 mb-3">Tumdsdsor Grade</div>
+                    <div className="text-sm font-medium text-white/90 mb-3">Tumor Grade</div>
                     <Select value={currentAssessment.grade ?? ""} onValueChange={(value) => updateCurrentAssessment({ grade: value })}>
                       <SelectTrigger className="bg-background/60 border-white/30 text-white/90">
                         <SelectValue placeholder="Select grade" />
@@ -733,6 +801,60 @@ export default function AnalysisPage() {
                         <span className="text-muted-foreground">Confidence:</span> {consensus["Confidence"] ?? "—"}
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* PDF Report Generation Section */}
+                {consensus && (
+                  <div className="mt-6 rounded-md border border-white/20 bg-background/60 p-4">
+                    <div className="text-lg font-semibold text-white/90 mb-4">Generate PDF Medical Report</div>
+                    <p className="text-sm text-muted-foreground/70 mb-4">
+                      Generate a comprehensive medical report combining consensus findings and individual radiologist observations.
+                    </p>
+
+                    {/* Generate Report Button */}
+                    <div className="flex justify-center">
+                      <Button
+                        size="lg"
+                        disabled={isGeneratingReport}
+                        onClick={handleGenerateReport}
+                        className="relative bg-gradient-to-r from-green-600 via-green-700 to-green-800 hover:from-green-700 hover:via-green-800 hover:to-green-900 text-black font-bold px-16 py-4 text-base shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 border border-green-500/30 hover:border-green-400/50 [&>*]:text-black [&>span]:text-black [&>svg]:text-black"
+                      >
+                        {isGeneratingReport ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-3 animate-spin text-black" />
+                            <span className="text-black">Generating Report...</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="h-4 w-4 mr-3 text-black" />
+                            <span className="text-black">Generate PDF Report</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Report Error Display */}
+                    {reportError && (
+                      <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-md">
+                        <p className="text-sm text-red-400">{reportError}</p>
+                      </div>
+                    )}
+
+                    {/* Report Success Display */}
+                    {reportUrl && (
+                      <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-md">
+                        <p className="text-sm text-green-400 mb-2">PDF report generated and downloaded successfully!</p>
+                        <a
+                          href={reportUrl}
+                          download
+                          className="inline-flex items-center text-sm text-blue-400 hover:text-blue-300 underline"
+                        >
+                          <FileText className="h-4 w-4 mr-1" />
+                          Download PDF Report Again
+                        </a>
+                      </div>
+                    )}
                   </div>
                 )}
               </CardContent>
