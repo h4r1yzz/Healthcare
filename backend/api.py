@@ -10,11 +10,15 @@ import numpy as np
 import nibabel as nib
 import matplotlib.pyplot as plt
 from PIL import Image, ImageDraw
+from dotenv import load_dotenv
 
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Ensure project root on sys.path for absolute imports when running from `backend/`
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -348,8 +352,10 @@ async def generate_report(request: ReportRequest):
         if not os.path.exists(scan_data_path):
             raise HTTPException(status_code=400, detail="Scan data not found. Please generate consensus first.")
 
-        # Initialize the report generator with hardcoded API key
-        api_key = ""
+        # Initialize the report generator with API key from environment
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            raise HTTPException(status_code=500, detail="OPENAI_API_KEY not found in environment variables")
         generator = LLMReportGenerator(api_key=api_key)
 
         # Generate the report
