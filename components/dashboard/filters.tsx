@@ -50,11 +50,11 @@ export default function Filters() {
         <Select>
           <SelectTrigger className="mt-1 h-9 border-gray-300 bg-white text-black focus:ring-0"><SelectValue placeholder="Grade" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="I">I</SelectItem>
-            <SelectItem value="II">II</SelectItem>
-            <SelectItem value="III">III</SelectItem>
-            <SelectItem value="IV">IV</SelectItem>
-            <SelectItem value="Unknown">Unknown</SelectItem>
+            <SelectItem value="I">Grade I</SelectItem>
+            <SelectItem value="II">Grade II</SelectItem>
+            <SelectItem value="III">Grade III</SelectItem>
+            <SelectItem value="IV">Grade IV</SelectItem>
+            <SelectItem value="Unknown">Grade Unknown</SelectItem>
           </SelectContent>
         </Select>
       </div>

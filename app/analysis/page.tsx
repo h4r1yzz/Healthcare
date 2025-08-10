@@ -128,14 +128,7 @@ export default function AnalysisPage() {
 
   // Helper function to format grade labels
   const formatGradeLabel = (grade: string) => {
-    switch (grade) {
-      case "II":
-        return "Grade II (Low Grade)"
-      case "III":
-        return "Grade III (High Grade)"
-      default:
-        return `Grade ${grade}`
-    }
+    return `Grade ${grade}`
   }
 
   // Load assessments and completion status on component mount
