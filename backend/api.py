@@ -3,6 +3,7 @@ import sys
 import shutil
 import time
 import logging
+import json
 from typing import Optional, Tuple
 
 import numpy as np
@@ -80,6 +81,16 @@ class ConsensusRequest(BaseModel):
 class ConsensusResponse(BaseModel):
     consensus: Dict[str, str]
     saved_json_path: str
+
+
+class ReportRequest(BaseModel):
+    scan_id: str
+
+
+class ReportResponse(BaseModel):
+    report_path: str
+    download_url: str
+    filename: str
 
 
 _model = None
@@ -270,12 +281,12 @@ async def consensus(request: ConsensusRequest):
     try:
         # Initialize the predictor
         predictor = MultiFieldAnnotatorPredictor(verbose=True)
-        
+
         # Convert assessments to the format expected by add_new_scan
         scan_data = {
             request.scan_id: {}
         }
-        
+
         for assessment in request.assessments:
             radiologist_name = assessment.get("radiologist", "unknown")
             scan_data[request.scan_id][radiologist_name] = {
@@ -283,26 +294,80 @@ async def consensus(request: ConsensusRequest):
                 "Tumor Type": assessment.get("tumor_type", ""),
                 "Tumor Grade": assessment.get("tumor_grade", ""),
                 "Size": assessment.get("size", ""),
-                "Confidence": assessment.get("confidence", "50%")
+                "Confidence": assessment.get("confidence", "50%"),
+                "Additional Comments": assessment.get("comments", "")
             }
-        
+
+        # Save the scan data with comments for report generation
+        case_dir = os.path.join(PUBLIC_DATA_DIR, request.scan_id)
+        os.makedirs(case_dir, exist_ok=True)
+        scan_data_path = os.path.join(case_dir, "scan_data.json")
+
+        with open(scan_data_path, "w") as f:
+            json.dump(scan_data, f, indent=2)
+
         # Process the scan data
         result = predictor.add_new_scan(scan_data)
-        
+
         # Get the consensus for this scan
         consensus_labels = result["consensus_labels"].get(request.scan_id, {})
-        
+
         # Determine the saved JSON path
-        case_dir = os.path.join(PUBLIC_DATA_DIR, request.scan_id)
         json_path = os.path.join(case_dir, "consensus_labels.json")
-        
+
         return ConsensusResponse(
             consensus=consensus_labels,
             saved_json_path=json_path
         )
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to generate consensus: {str(e)}")
+
+
+@app.post("/generate-report", response_model=ReportResponse)
+async def generate_report(request: ReportRequest):
+    """
+    Generate a comprehensive medical report using LLM with hardcoded API key.
+    """
+    try:
+        from backend.llm_report_generator import LLMReportGenerator
+
+        # Determine case directory
+        case_dir = os.path.join(PUBLIC_DATA_DIR, request.scan_id)
+
+        if not os.path.exists(case_dir):
+            raise HTTPException(status_code=404, detail=f"Case directory not found: {request.scan_id}")
+
+        # Check if required files exist
+        consensus_path = os.path.join(case_dir, "consensus_labels.json")
+        scan_data_path = os.path.join(case_dir, "scan_data.json")
+
+        if not os.path.exists(consensus_path):
+            raise HTTPException(status_code=400, detail="Consensus labels not found. Please generate consensus first.")
+
+        if not os.path.exists(scan_data_path):
+            raise HTTPException(status_code=400, detail="Scan data not found. Please generate consensus first.")
+
+        # Initialize the report generator with hardcoded API key
+        api_key = ""
+        generator = LLMReportGenerator(api_key=api_key)
+
+        # Generate the report
+        report_path = generator.generate_report(request.scan_id, case_dir)
+
+        # Create download URL and filename
+        report_filename = os.path.basename(report_path)
+        download_url = f"/data/{request.scan_id}/{report_filename}"
+
+        return ReportResponse(
+            report_path=report_path,
+            download_url=download_url,
+            filename=report_filename
+        )
+
+    except Exception as e:
+        logger.error(f"Failed to generate report: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate report: {str(e)}")
 
 
 @app.post("/preview")
