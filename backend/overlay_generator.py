@@ -1,5 +1,5 @@
 """
-Overlay image generator for NeuroGrade_AI similarity search.
+Overlay image generator for NeuroGrade similarity search.
 Creates FLAIR background images with red segmentation overlays.
 """
 

@@ -1,5 +1,5 @@
 """
-Similarity search module for NeuroGrade_AI.
+Similarity search module for NeuroGrade.
 Integrates CLIP model with Pinecone vector database for medical image similarity search.
 """
 

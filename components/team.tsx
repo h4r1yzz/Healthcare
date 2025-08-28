@@ -21,7 +21,7 @@ const teamMembers: TeamMember[] = [
     id: "1",
     name: "Harry Chandra Tsjan",
     role: "Chief Executive Officer & Co-Founder",
-    bio: "Leading neurologist with 15+ years of experience in brain tumor diagnosis and treatment. Pioneered several AI-assisted diagnostic protocols in major medical centers.",
+    bio: "",
     avatar: "/team/harry.jpeg",
     linkedin: "https://www.linkedin.com/in/harry-chandra-180870179/",
     email: "harrychandra@neurograde.ai"
@@ -30,7 +30,7 @@ const teamMembers: TeamMember[] = [
     id: "2",
     name: "Tham Chie Weng",
     role: "Chief Technology Officer & Co-Founder",
-    bio: "Former Google AI researcher specializing in medical imaging and machine learning. Published 50+ papers on computer vision applications in healthcare.",
+    bio: "",
     avatar: "/team/chieweng.jpeg",
     linkedin: "https://www.linkedin.com/in/chie-weng-tham/",
     email: "chieweng.lim@neurograde.ai"
@@ -39,7 +39,7 @@ const teamMembers: TeamMember[] = [
     id: "3",
     name: "Muthuraman Palaniappan",
     role: "Head of Clinical Research",
-    bio: "Board-certified radiologist with expertise in neuroimaging and AI validation. Led clinical trials for multiple FDA-approved medical AI systems.",
+    bio: "",
     avatar: "/team/muthu.jpeg",
     linkedin: "https://www.linkedin.com/in/muthuraman-palaniappan-83b12324b/",
     email: "muthu@neurograde.ai"
@@ -48,7 +48,7 @@ const teamMembers: TeamMember[] = [
     id: "4",
     name: "Zuhair",
     role: "Senior AI Research Scientist",
-    bio: "PhD in Computer Science from Stanford with focus on deep learning for medical applications. Expert in neural networks and image analysis algorithms.",
+    bio: "",
     avatar: "/team/zuhair.jpeg",
     linkedin: "https://www.linkedin.com/in/zuhairaziz/",
     email: "zuhair.ahmad@neurograde.ai"

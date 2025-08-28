@@ -8,7 +8,7 @@ export default function Navbar() {
       <div className="container flex h-14 max-w-screen-2xl items-center">
         <Link href="/" className="mr-6 flex items-center gap-3">
           <Brain className="h-5 w-5 text-[#0971e7]" />
-          <span className="font-semibold">NeuroGrade AI</span>
+          <span className="font-semibold">NeuroGrade</span>
           <span className="hidden sm:inline text-muted-foreground text-sm pl-3 border-l border-border/60">
             Multi-Modal Brain Tumor Grading
           </span>

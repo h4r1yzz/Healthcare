@@ -5,8 +5,8 @@ import MouseMoveEffect from "@/components/mouse-move-effect"
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: "NeuroGrade AI",
-  description: "NeuroGrade AI delivers innovative, high-performance software solutions for businesses of the future.",
+  title: "NeuroGrade",
+  description: "NeuroGrade delivers innovative, high-performance software solutions for businesses of the future.",
   icons: {
     icon: [
       { url: "/icon/icons8-brain-forma-thin-filled-16.png", sizes: "16x16", type: "image/png" },

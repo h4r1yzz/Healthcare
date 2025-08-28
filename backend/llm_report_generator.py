@@ -1,5 +1,5 @@
 """
-LLM-based medical report generator for NeuroGrade_AI.
+LLM-based medical report generator for NeuroGrade.
 Integrates with the consensus system to generate comprehensive cancer reports.
 """
 
@@ -619,7 +619,7 @@ Do **NOT** wrap your answer in ```html or ``` code fences. Output only the raw H
     <!-- Medical Report Header -->
     <div class="medical-header">
         <div class="institution-info">
-            <div class="institution-name">NeuroGrade AI Medical Center</div>
+            <div class="institution-name">NeuroGrade Medical Center</div>
             <div class="department">Department of Radiology & Neuroimaging</div>
         </div>
         <div class="report-title">Brain Tumor Analysis Report</div>
@@ -686,7 +686,7 @@ Do **NOT** wrap your answer in ```html or ``` code fences. Output only the raw H
 
     <!-- Report Footer -->
     <div class="report-footer">
-        <div class="footer-row"><strong>NeuroGrade AI Medical Report Generation System</strong></div>
+        <div class="footer-row"><strong>NeuroGrade Medical Report Generation System</strong></div>
         <div class="footer-row">Multi-Radiologist Consensus Analysis with AI-Assisted Interpretation</div>
         <div class="footer-row">Report ID: {scan_id} | Generated: {__import__('datetime').datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</div>
         <div class="disclaimer">

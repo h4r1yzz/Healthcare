@@ -1,5 +1,5 @@
 """
-Configuration module for NeuroGrade_AI similarity search functionality.
+Configuration module for NeuroGrade similarity search functionality.
 Manages environment variables and default settings for CLIP and Pinecone integration.
 """
 

@@ -70,4 +70,7 @@ backend/.ipynb
 backend/myenv
 backend/.ipynb
 *.ipynb
-public/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingData
+public/BraTS2020_TrainingData/MICCAI_BraTS2020_TrainingDatabackend/consensus_labels.json
+
+public/BraTS2020_TrainingData/
+public/cache
